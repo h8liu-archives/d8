@@ -139,7 +139,7 @@ func (self *Domain) Parent() *Domain {
 	return &Domain{name, labels}
 }
 
-func (self *Domain) RegParts() (reged *Domain, registrar *Domain) {
+func (self *Domain) RegParts() (registered *Domain, registrar *Domain) {
 	var last *Domain
 	cur := self
 	parent := self.Parent()
