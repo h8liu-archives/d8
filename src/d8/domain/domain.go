@@ -61,7 +61,11 @@ func checkLabel(s string, label string) error {
 	return nil
 }
 
-var Root = &Domain{"", []string{}}
+var Root *Domain
+
+func init() {
+	Root = &Domain{"", []string{}}
+}
 
 func Parse(s string) (*Domain, error) {
 	orig := s
