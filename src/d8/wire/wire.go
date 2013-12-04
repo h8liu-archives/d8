@@ -3,10 +3,8 @@ package wire
 
 type Msg struct {
 	b []byte
-	
 }
 
 func Unpack(buf []byte) *Msg {
 	panic("todo")
 }
-
