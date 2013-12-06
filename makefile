@@ -1,9 +1,8 @@
 .PHONY: all fmt test testv tags doc vet
 
-all: build vet
+all: build
 
 build:
-	@ GOPATH=`pwd` go build -v ./src/...
 	@ GOPATH=`pwd` go install ./src/...
 
 fmt: 

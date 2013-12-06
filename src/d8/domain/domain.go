@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"strings"
@@ -163,4 +164,13 @@ func (self *Domain) RegParts() (registered *Domain, registrar *Domain) {
 func (self *Domain) IsRegistrar() bool {
 	reged, _ := self.RegParts()
 	return reged == nil
+}
+
+func (self *Domain) Pack(buf *bytes.Buffer) {
+	for _, lab := range self.labels {
+		_lab := []byte(lab)
+		buf.WriteByte(byte(len(_lab)))
+		buf.Write(_lab)
+	}
+	buf.WriteByte(0)
 }
