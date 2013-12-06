@@ -1,4 +1,4 @@
-package wire
+package packet
 
 type Section []*RR
 

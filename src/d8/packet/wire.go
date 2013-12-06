@@ -1,5 +1,5 @@
 // Package wire parses DNS messages into records and pack DNS queries
-package wire
+package packet
 
 import (
 	"bytes"

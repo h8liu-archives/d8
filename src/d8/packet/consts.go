@@ -1,4 +1,4 @@
-package wire
+package packet
 
 // rdata type
 const (
