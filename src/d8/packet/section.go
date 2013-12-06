@@ -19,5 +19,13 @@ func (self Section) LenU16() uint16 {
 }
 
 func (self Section) unpack(in *bytes.Reader, p []byte) error {
-	panic("todo")
+	var e error
+	for i, _ := range self {
+		self[i], e = unpackRR(in, p)
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }

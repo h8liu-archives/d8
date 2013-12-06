@@ -61,3 +61,8 @@ func (self *RR) unpack(in *bytes.Reader, p []byte) error {
 
 	return self.unpackRdata(in, p)
 }
+
+func unpackRR(in *bytes.Reader, p []byte) (*RR, error) {
+	ret := new(RR)
+	return ret, ret.unpack(in, p)
+}
