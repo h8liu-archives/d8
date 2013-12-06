@@ -8,6 +8,7 @@ import (
 	"math/rand"
 
 	"d8/domain"
+	. "d8/packet/consts"
 )
 
 type Message struct {
