@@ -107,9 +107,13 @@ func (self *Message) PackQuery() []byte {
 }
 
 func Q(d *domain.Domain, t uint16) *Message {
+	return Qid(d, t, randomId())
+}
+
+func Qid(d *domain.Domain, t, id uint16) *Message {
 	m := new(Message)
 
-	m.Id = randomId()
+	m.Id = id
 	m.Flag = 0
 	m.Question = &Question{d, t, IN}
 	m.PackQuery()

@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	"d8/domain"
 	"d8/packet"
 )
 
@@ -21,6 +22,11 @@ func NewPort(port uint16) *Client {
 	panic("todo")
 }
 
+type Query struct {
+	Domain *domain.Domain
+	Type   uint16
+}
+
 type Message struct {
 	RemoteAddr *net.UDPAddr
 	Message    *packet.Message
@@ -28,31 +34,30 @@ type Message struct {
 }
 
 type Exchange struct {
-	Question *Message
-	Reply    *Message
-	Error    error
+	Query *Message
+	Reply *Message
+	Error error
 }
 
-func (self *Client) Send(m *Message, c <-chan *Exchange) {
+func (self *Client) Send(q *Query, c <-chan *Exchange) {
 	// will send the message out via network
 	// if any send error, then put an error exchange into c
 
 	panic("todo")
 }
 
-func (self *Client) AsyncQuery(m *Message, f func(*Exchange)) {
+func (self *Client) AsyncQuery(q *Query, f func(*Exchange)) {
 	c := make(chan *Exchange)
 	go func() {
 		f(<-c)
 	}()
 
-	self.Send(m, c)
+	self.Send(q, c)
 }
 
-func (self *Client) Query(m *Message) (*Message, error) {
+func (self *Client) Query(q *Query) *Exchange {
 	c := make(chan *Exchange, 1) // we need a slot in case of send error
-	self.Send(m, c)
+	self.Send(q, c)
 
-	exchange := <-c
-	return exchange.Reply, exchange.Error
+	return <-c
 }
