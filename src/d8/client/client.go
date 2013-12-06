@@ -34,8 +34,9 @@ type Message struct {
 }
 
 type Exchange struct {
-	Query *Message
-	Reply *Message
+	Query *Query
+	Send  *Message
+	Recv  *Message
 	Error error
 }
 
