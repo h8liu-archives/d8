@@ -4,6 +4,7 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"math/rand"
 
 	"d8/domain"
@@ -24,32 +25,72 @@ func randomId() uint16 { return uint16(rand.Uint32()) }
 
 var enc = binary.BigEndian
 
-func u16(buf []byte) uint16       { return enc.Uint16(buf) }
-func u32(buf []byte) uint32       { return enc.Uint32(buf) }
-func putU16(buf []byte, i uint16) { enc.PutUint16(buf, i) }
-func putU32(buf []byte, i uint32) { enc.PutUint32(buf, i) }
-
-func Unpack(p []byte) *Message {
+func Unpack(p []byte) (*Message, error) {
 	m := new(Message)
 	m.Packet = p
-	m.Unpack()
+	e := m.Unpack()
 
-	return m
+	return m, e
 }
 
-func (self *Message) Unpack() {
-	// TODO
+func (self *Message) Unpack() error {
+	if self.Packet == nil {
+		return errors.New("nil packet")
+	}
+
+	in := bytes.NewReader(self.Packet)
+
+	if e := self.unpackHeader(in); e != nil {
+		return e
+	}
+
+	if e := self.Question.unpack(in, self.Packet); e != nil {
+		return e
+	}
+
+	if e := self.Answer.unpack(in, self.Packet); e != nil {
+		return e
+	}
+
+	if e := self.Authority.unpack(in, self.Packet); e != nil {
+		return e
+	}
+
+	if e := self.Addition.unpack(in, self.Packet); e != nil {
+		return e
+	}
+
+	return nil
+}
+
+func (self *Message) unpackHeader(in *bytes.Reader) error {
+	var buf [12]byte
+	if _, e := in.Read(buf[:]); e != nil {
+		return e
+	}
+
+	self.Id = enc.Uint16(buf[0:2])
+	self.Flag = enc.Uint16(buf[2:4])
+	if enc.Uint16(buf[4:6]) != 1 {
+		return errors.New("not one question")
+	}
+
+	self.Answer = make([]*RR, enc.Uint16(buf[6:8]))
+	self.Authority = make([]*RR, enc.Uint16(buf[8:10]))
+	self.Addition = make([]*RR, enc.Uint16(buf[10:12]))
+
+	return nil
 }
 
 func (self *Message) packHeader(out *bytes.Buffer) {
 	var buf [12]byte
 
-	putU16(buf[0:2], self.Id)
-	putU16(buf[2:4], self.Flag)
-	putU16(buf[4:6], 1) // always have one question
-	putU16(buf[6:8], self.Answer.LenU16())
-	putU16(buf[8:10], self.Authority.LenU16())
-	putU16(buf[10:12], self.Addition.LenU16())
+	enc.PutUint16(buf[0:2], self.Id)
+	enc.PutUint16(buf[2:4], self.Flag)
+	enc.PutUint16(buf[4:6], 1) // always have one question
+	enc.PutUint16(buf[6:8], self.Answer.LenU16())
+	enc.PutUint16(buf[8:10], self.Authority.LenU16())
+	enc.PutUint16(buf[10:12], self.Addition.LenU16())
 
 	out.Write(buf[:])
 }

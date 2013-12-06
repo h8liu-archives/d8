@@ -1,5 +1,9 @@
 package packet
 
+import (
+	"bytes"
+)
+
 type Section []*RR
 
 func (self Section) LenU16() uint16 {
@@ -12,4 +16,8 @@ func (self Section) LenU16() uint16 {
 	}
 
 	return uint16(len(self))
+}
+
+func (self Section) unpack(in *bytes.Reader, p []byte) error {
+	panic("todo")
 }

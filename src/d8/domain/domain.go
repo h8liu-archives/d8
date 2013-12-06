@@ -2,6 +2,7 @@ package domain
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -30,19 +31,19 @@ func err(s, r string) error {
 	return fmt.Errorf("'%s': %s", s, r)
 }
 
-func checkLabel(s string, label string) error {
+func checkLabel(label string) error {
 	nl := len(label)
 	if nl == 0 {
-		return err(s, "empty label")
+		return errors.New("empty label")
 	}
 	if nl >= 64 {
-		return err(s, "label too long")
+		return errors.New("label too long")
 	}
 	if label[0] == '-' {
-		return err(s, "label starts with dash")
+		return errors.New("label starts with dash")
 	}
 	if label[nl-1] == '-' {
-		return err(s, "label ends with dash")
+		return errors.New("label ends with dash")
 	}
 
 	for _, c := range label {
@@ -56,7 +57,7 @@ func checkLabel(s string, label string) error {
 			continue
 		}
 
-		return err(s, "invalid char")
+		return errors.New("invalid char")
 	}
 
 	return nil
@@ -94,9 +95,9 @@ func Parse(s string) (*Domain, error) {
 	labels := strings.Split(s, ".")
 
 	for _, label := range labels {
-		e := checkLabel(orig, label)
+		e := checkLabel(label)
 		if e != nil {
-			return nil, e
+			return nil, err(orig, e.Error())
 		}
 	}
 
@@ -173,4 +174,61 @@ func (self *Domain) Pack(buf *bytes.Buffer) {
 		buf.Write(_lab)
 	}
 	buf.WriteByte(0)
+}
+
+func isRedirect(b byte) bool { return b&0xc0 == 0xc0 }
+func offset(n, b byte) int   { return (int(n&0x3f) << 8) + int(b) }
+
+func Unpack(buf *bytes.Reader, p []byte) (*Domain, error) {
+	labels := make([]string, 0, 5)
+	_len := 0
+
+	for {
+		n, e := buf.ReadByte() // label length
+		if e != nil {
+			return nil, e
+		}
+		if n == 0 {
+			break
+		}
+		if isRedirect(n) {
+			b, e := buf.ReadByte()
+			if e != nil {
+				return nil, e
+			}
+			off := offset(n, b)
+			if off >= len(p) {
+				return nil, errors.New("offset out of range")
+			}
+			buf = bytes.NewReader(p[off:])
+			continue
+		}
+		if n > 63 {
+			return nil, errors.New("label too long")
+		}
+		_len += int(n) + 1
+		if _len > 255 {
+			return nil, errors.New("domain too long")
+		}
+
+		labelBuf := make([]byte, n)
+		if _, e := buf.Read(labelBuf); e != nil {
+			return nil, e
+		}
+
+		label := string(labelBuf)
+
+		if e := checkLabel(label); e != nil {
+			return nil, e
+		}
+		labels = append(labels, label)
+	}
+
+	name := strings.Join(labels, ".")
+
+	if len(name) > 255 {
+		return nil, errors.New("domain too long")
+	}
+
+	return &Domain{name, labels}, nil
 }
