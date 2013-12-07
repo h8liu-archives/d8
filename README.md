@@ -1,4 +1,3 @@
-d8
-==
+# d8
 
 A DNS crawler in Go
