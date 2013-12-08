@@ -33,7 +33,7 @@ func (self Section) unpack(in *bytes.Reader, p []byte) error {
 
 func (self Section) PrintTo(p *printer.Printer) {
 	for _, rr := range self {
-		rr.PrintTo(p)
+		p.Print(rr)
 	}
 }
 
@@ -44,9 +44,14 @@ func (self Section) PrintNameTo(p *printer.Printer, name string) {
 	if len(self) == 0 {
 		return
 	}
-	p.Printf("%s {", name)
-	p.ShiftIn()
-	self.PrintTo(p)
-	p.ShiftOut()
-	p.Print("}")
+
+	if len(self) == 1 {
+		p.Printf("%s %v", name, self[0])
+	} else {
+		p.Printf("%s {", name)
+		p.ShiftIn()
+		self.PrintTo(p)
+		p.ShiftOut()
+		p.Print("}")
+	}
 }

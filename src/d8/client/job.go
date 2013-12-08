@@ -1,8 +1,8 @@
 package client
 
 import (
-	"time"
 	"printer"
+	"time"
 )
 
 type job struct {

@@ -9,11 +9,17 @@ import (
 	"printer"
 )
 
+const (
+	PrintAll = iota
+	PrintReply
+)
+
 type Query struct {
-	Domain *domain.Domain
-	Type   uint16
-	Server *net.UDPAddr
-	Printer *printer.Printer
+	Domain    *domain.Domain
+	Type      uint16
+	Server    *net.UDPAddr
+	Printer   *printer.Printer
+	PrintFlag int
 }
 
 func (self *Query) String() string {

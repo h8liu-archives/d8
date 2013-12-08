@@ -7,7 +7,6 @@ import (
 	"d8/domain"
 	. "d8/packet/consts"
 	"d8/packet/rdata"
-	"printer"
 )
 
 type RR struct {
@@ -70,7 +69,7 @@ func unpackRR(in *bytes.Reader, p []byte) (*RR, error) {
 	return ret, ret.unpack(in, p)
 }
 
-func (self *RR) PrintTo(p *printer.Printer) {
+func (self *RR) String() string {
 	buf := new(bytes.Buffer)
 	fmt.Fprintf(buf, "%s %s ", self.Domain.String(), TypeString(self.Type))
 	if self.Class != IN {
@@ -79,7 +78,7 @@ func (self *RR) PrintTo(p *printer.Printer) {
 	self.Rdata.PrintTo(buf)
 	fmt.Fprintf(buf, " %s", ttlString(self.TTL))
 
-	p.Println(buf.String())
+	return buf.String()
 }
 
 func ttlString(t uint32) string {

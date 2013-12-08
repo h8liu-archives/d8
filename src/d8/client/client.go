@@ -162,7 +162,7 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 	}
 
 	self.newJobs <- job // set a place in mapping
-	
+
 	if q.Printer != nil {
 		exchange.printSend(q.Printer)
 	}
