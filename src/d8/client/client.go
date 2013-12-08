@@ -145,6 +145,10 @@ const timeout = time.Second * 3
 func (self *Client) Send(q *Query, c chan<- *Exchange) {
 	id := self.idPool.Fetch()
 	message := newMessage(q, id)
+	if message.RemoteAddr.Port == 0 {
+		message.RemoteAddr.Port = DnsPort
+	}
+
 	exchange := &Exchange{
 		Query: q,
 		Send:  message,
@@ -153,10 +157,15 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 		id:       id,
 		exchange: exchange,
 		deadline: time.Now().Add(timeout),
+		printer:  q.Printer,
 		c:        c,
 	}
 
 	self.newJobs <- job // set a place in mapping
+	
+	if q.Printer != nil {
+		exchange.printSend(q.Printer)
+	}
 
 	e := self.send(message)
 	if e != nil {
@@ -168,10 +177,6 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 }
 
 func (self *Client) send(m *Message) error {
-	if m.RemoteAddr.Port == 0 {
-		m.RemoteAddr.Port = DnsPort
-	}
-
 	_, e := self.conn.WriteToUDP(m.Packet.Bytes, m.RemoteAddr)
 	return e
 }

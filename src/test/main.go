@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 	"net"
+	"os"
 
+	"printer"
 	"d8/client"
 	. "d8/domain"
 	. "d8/packet/consts"
@@ -21,11 +23,11 @@ func main() {
 		Domain: D("liulonnie.net"),
 		Type:   A,
 		Server: &net.UDPAddr{IP: net.ParseIP("74.220.195.131")},
+		Printer: printer.New(os.Stdout),
 	}
 
 	client, e := client.New()
 	noError(e)
 
-	exchange := client.Query(q)
-	fmt.Println(exchange)
+	client.Query(q)
 }

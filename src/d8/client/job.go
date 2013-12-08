@@ -2,16 +2,21 @@ package client
 
 import (
 	"time"
+	"printer"
 )
 
 type job struct {
 	id       uint16
 	exchange *Exchange
 	deadline time.Time
+	printer  *printer.Printer
 	c        chan<- *Exchange
 }
 
 func (self *job) Close() {
+	if self.printer != nil {
+		self.exchange.printRecv(self.printer)
+	}
 	self.c <- self.exchange
 }
 

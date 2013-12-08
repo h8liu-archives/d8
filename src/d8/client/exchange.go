@@ -12,6 +12,11 @@ type Exchange struct {
 }
 
 func (self *Exchange) PrintTo(p *printer.Printer) {
+	self.printSend(p)
+	self.printRecv(p)
+}
+
+func (self *Exchange) printSend(p *printer.Printer) {
 	p.Printf("%s {", self.Query.String())
 	p.ShiftIn()
 
@@ -20,7 +25,9 @@ func (self *Exchange) PrintTo(p *printer.Printer) {
 	self.Send.PrintTo(p)
 	p.ShiftOut()
 	p.Print("}")
+}
 
+func (self *Exchange) printRecv(p *printer.Printer) {
 	if self.Recv != nil {
 		p.Print("recv {")
 		p.ShiftIn()
