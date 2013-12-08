@@ -11,6 +11,7 @@
 
 # todo
 
+- some simple rdata parsing
 - message printing
 - shell
 - cmds
