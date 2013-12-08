@@ -11,7 +11,7 @@
 
 # todo
 
-- message printing
+message printing
 
     $ dig liulonnie.net @74.220.195.131
     q liulonnie.net a @192.228.79.201 
