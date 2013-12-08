@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"printer"
 )
 
 type Section []*RR
@@ -30,6 +31,16 @@ func (self Section) unpack(in *bytes.Reader, p []byte) error {
 	return nil
 }
 
-func (self Section) printTo(out *bytes.Buffer, name string) {
-	panic("todo")
+func (self Section) PrintTo(p *printer.Printer) {
+	for _, rr := range self {
+		rr.PrintTo(p)
+	}
+}
+
+func (self Section) PrintNameTo(p *printer.Printer, name string) {
+	p.Printf("%s {\n", name)
+	p.ShiftIn()
+	self.PrintTo(p)
+	p.ShiftOut()
+	p.Println("}")
 }

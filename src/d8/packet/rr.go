@@ -5,6 +5,7 @@ import (
 
 	"d8/domain"
 	"d8/packet/rdata"
+	"printer"
 )
 
 type RR struct {
@@ -65,4 +66,8 @@ func (self *RR) unpack(in *bytes.Reader, p []byte) error {
 func unpackRR(in *bytes.Reader, p []byte) (*RR, error) {
 	ret := new(RR)
 	return ret, ret.unpack(in, p)
+}
+
+func (self *RR) PrintTo(p *printer.Printer) {
+	panic("todo")
 }
