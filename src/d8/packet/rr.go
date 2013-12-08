@@ -29,7 +29,7 @@ func (self *RR) packFlags(out *bytes.Buffer) {
 func (self *RR) pack(out *bytes.Buffer) {
 	self.Domain.Pack(out)
 	self.packFlags(out)
-	self.Rdata.Pack(out)
+	rdata.Pack(out, self.Rdata)
 }
 
 func (self *RR) unpackFlags(in *bytes.Reader) error {
