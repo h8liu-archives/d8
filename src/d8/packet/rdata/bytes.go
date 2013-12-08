@@ -2,6 +2,7 @@ package rdata
 
 import (
 	"bytes"
+	"fmt"
 )
 
 type Bytes []byte
@@ -33,4 +34,15 @@ func UnpackBytes(in *bytes.Reader) (Bytes, error) {
 	}
 
 	return Bytes(ret), nil
+}
+
+func (self Bytes) PrintTo(out *bytes.Buffer) {
+	fmt.Fprintf(out, "[")
+	for i, b := range self {
+		if i > 0 && i%4 == 0 {
+			fmt.Fprintf(out, " ")
+		}
+		fmt.Fprintf(out, "%02x", b)
+	}
+	fmt.Fprintf(out, "]")
 }

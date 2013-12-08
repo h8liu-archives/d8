@@ -129,8 +129,8 @@ func Qid(d *domain.Domain, t, id uint16) *Packet {
 }
 
 func (self *Packet) PrintTo(p *printer.Printer) {
-	p.Printf("%d %s\n", self.Id, flagString(self.Flag))
-	p.Printf("ques %v\n", self.Question)
+	p.Printf("#%d %s", self.Id, flagString(self.Flag))
+	p.Printf("ques %v", self.Question)
 	self.Answer.PrintNameTo(p, "answ")
 	self.Authority.PrintNameTo(p, "auth")
 	self.Addition.PrintNameTo(p, "addi")

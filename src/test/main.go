@@ -27,6 +27,12 @@ func main() {
 	noError(e)
 
 	exchange := client.Query(q)
-	fmt.Println("err:", exchange.Error)
-	fmt.Println("recv:", exchange.Recv)
+	fmt.Println("[send]")
+	fmt.Print(exchange.Send)
+	if exchange.Error != nil {
+		fmt.Print("error: ", exchange.Error)
+	} else {
+		fmt.Println("[recv]")
+		fmt.Print(exchange.Recv)
+	}
 }

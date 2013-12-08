@@ -1,9 +1,7 @@
 package client
 
 import (
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -80,7 +78,6 @@ func (self *Client) recv() {
 			Packet:     p,
 			Timestamp:  time.Now(),
 		}
-		log.Println("recv:", m)
 		self.recvs <- m
 
 		buf = newRecvBuf()
@@ -100,11 +97,9 @@ func (self *Client) serve() {
 	for {
 		select {
 		case job := <-self.newJobs:
-			log.Println("new:", job.id)
 			id := job.id
 			bugOn(self.jobs[id] != nil)
 			self.jobs[id] = job
-			log.Println("new done")
 		case job := <-self.sendErrors:
 			/*
 				Need to check if it is still the same job. In some rare racing
@@ -117,7 +112,6 @@ func (self *Client) serve() {
 				self.delJob(job.id)
 			}
 		case m := <-self.recvs:
-			log.Println("recved:", m)
 			id := m.Packet.Id
 			job := self.jobs[id]
 			if job == nil {
@@ -139,10 +133,6 @@ func (self *Client) serve() {
 				}
 			}
 
-			if len(timeouts) > 0 {
-				log.Println("timeouts:", now, timeouts)
-			}
-
 			for _, id := range timeouts {
 				self.delJob(id)
 			}
@@ -153,8 +143,6 @@ func (self *Client) serve() {
 const timeout = time.Second * 3
 
 func (self *Client) Send(q *Query, c chan<- *Exchange) {
-	log.Println("query:", q)
-
 	id := self.idPool.Fetch()
 	message := newMessage(q, id)
 	exchange := &Exchange{
@@ -184,8 +172,6 @@ func (self *Client) send(m *Message) error {
 		m.RemoteAddr.Port = DnsPort
 	}
 
-	log.Println("send:", m.RemoteAddr)
-	fmt.Print(hex.Dump(m.Packet.Bytes))
 	_, e := self.conn.WriteToUDP(m.Packet.Bytes, m.RemoteAddr)
 	return e
 }

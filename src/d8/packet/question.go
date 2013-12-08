@@ -2,7 +2,10 @@ package packet
 
 import (
 	"bytes"
+	"fmt"
+
 	"d8/domain"
+	. "d8/packet/consts"
 )
 
 type Question struct {
@@ -43,4 +46,12 @@ func (self *Question) unpackFlags(in *bytes.Reader) error {
 	self.Class = enc.Uint16(buf[2:4])
 
 	return nil
+}
+
+func (self *Question) String() string {
+	ret := fmt.Sprintf("%s %s", self.Domain.String(), typeString(self.Type))
+	if self.Class != IN {
+		ret += fmt.Sprintf(" %s", classString(self.Class))
+	}
+	return ret
 }

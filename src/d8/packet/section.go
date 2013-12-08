@@ -38,9 +38,15 @@ func (self Section) PrintTo(p *printer.Printer) {
 }
 
 func (self Section) PrintNameTo(p *printer.Printer, name string) {
-	p.Printf("%s {\n", name)
+	if self == nil {
+		return
+	}
+	if len(self) == 0 {
+		return
+	}
+	p.Printf("%s {", name)
 	p.ShiftIn()
 	self.PrintTo(p)
 	p.ShiftOut()
-	p.Println("}")
+	p.Print("}")
 }

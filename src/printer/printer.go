@@ -62,6 +62,7 @@ func (self *Printer) Print(a ...interface{}) (int, error) {
 	n := 0
 	self.pre(&n)
 	self.p(&n, a...)
+	self.pln(&n)
 
 	return n, self.Error
 }
@@ -78,6 +79,7 @@ func (self *Printer) Printf(format string, a ...interface{}) (int, error) {
 	n := 0
 	self.pre(&n)
 	self.pf(&n, format, a...)
+	self.pln(&n)
 
 	return n, self.Error
 }
