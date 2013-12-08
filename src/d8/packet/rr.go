@@ -111,7 +111,7 @@ func classString(c uint16) string {
 	if found {
 		return s
 	}
-	return fmt.Sprintf("c%d", s)
+	return fmt.Sprintf("c%d", c)
 }
 
 func ttlString(t uint32) string {
