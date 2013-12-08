@@ -24,7 +24,7 @@ func (self *Exchange) PrintTo(p *printer.Printer) {
 	if self.Recv != nil {
 		p.Print("recv {")
 		p.ShiftIn()
-		self.Send.PrintTo(p)
+		self.Recv.PrintTo(p)
 		p.ShiftOut()
 		p.Print("}")
 	}
