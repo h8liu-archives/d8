@@ -1,50 +1,169 @@
 package client
 
 import (
+	"errors"
+	"log"
 	"net"
 	"time"
 
-	"d8/domain"
 	"d8/packet"
 )
 
 type Client struct {
-	conn *net.UDPConn
+	conn   *net.UDPConn
+	idPool idPool
+
+	jobs       map[uint16]*job
+	newJobs    chan *job
+	sendErrors chan *job
+	recvs      chan *Message
+	timer      <-chan time.Time
 }
 
-const DnsPort = 53
+const (
+	DnsPort    = 53
+	ClientPort = 5353
+)
 
-func New() *Client {
-	return NewPort(DnsPort)
+func NewPort(port uint16) (*Client, error) {
+	ret := new(Client)
+	addr := &net.UDPAddr{Port: ClientPort}
+	var e error
+	ret.conn, e = net.ListenUDP("udp4", addr)
+	if e != nil {
+		return nil, e
+	}
+
+	ret.newJobs = make(chan *job, 0)
+	ret.sendErrors = make(chan *job, 10)
+	ret.recvs = make(chan *Message, 10)
+	ret.timer = time.Tick(time.Millisecond * 100)
+
+	go ret.recv()
+	go ret.serve()
+
+	return ret, nil
 }
 
-func NewPort(port uint16) *Client {
-	panic("todo")
+func New() (*Client, error) {
+	return NewPort(ClientPort)
 }
 
-type Query struct {
-	Domain *domain.Domain
-	Type   uint16
+const packetMaxSize = 512
+
+func newRecvBuf() []byte {
+	return make([]byte, packetMaxSize)
 }
 
-type Message struct {
-	RemoteAddr *net.UDPAddr
-	Message    *packet.Message
-	Timestamp  time.Time
+func (self *Client) recv() {
+	buf := newRecvBuf()
+
+	for {
+		n, addr, e := self.conn.ReadFromUDP(buf)
+		if e != nil {
+			log.Print("recv:", e)
+			continue
+		}
+
+		p, e := packet.Unpack(buf[:n])
+		if e != nil {
+			log.Print("unpack:", e)
+			continue
+		}
+
+		self.recvs <- &Message{
+			RemoteAddr: addr,
+			Packet:     p,
+			Timestamp:  time.Now(),
+		}
+
+		buf = newRecvBuf()
+	}
 }
 
-type Exchange struct {
-	Query *Query
-	Send  *Message
-	Recv  *Message
-	Error error
+func (self *Client) delJob(id uint16) {
+	if self.jobs[id] != nil {
+		delete(self.jobs, id)
+		self.idPool.Return(id)
+	}
 }
 
-func (self *Client) Send(q *Query, c <-chan *Exchange) {
-	// will send the message out via network
-	// if any send error, then put an error exchange into c
+var ErrTimeout = errors.New("timeout")
 
-	panic("todo")
+func (self *Client) serve() {
+	select {
+	case job := <-self.newJobs:
+		id := job.id
+		bugOn(self.jobs[id] != nil)
+		self.jobs[id] = job
+	case job := <-self.sendErrors:
+		/*
+			Need to check if it is still the same job. In some rare racing
+			cases, sendErrors will be delayed (like by a send that takes too
+			long), and timeout might trigger first, hence reallocate the id to
+			another job.
+		*/
+		if self.jobs[job.id] == job {
+			// still the same job
+			self.delJob(job.id)
+		}
+	case m := <-self.recvs:
+		id := m.Packet.Id
+		job := self.jobs[id]
+		if job == nil {
+			// this might happen with the timeout window is set too small
+			log.Printf("recved zombie msg with id %d", id)
+		} else {
+			job.CloseRecv(m)
+		}
+	case now := <-self.timer:
+		timeouts := make([]uint16, 0, 1024)
+
+		for id, job := range self.jobs {
+			bugOn(job.id != id)
+			if job.deadline.Before(now) {
+				job.CloseErr(ErrTimeout)
+
+				// we are iterating the map, so delete afterwards for safty
+				timeouts = append(timeouts, id)
+			}
+		}
+
+		for _, id := range timeouts {
+			self.delJob(id)
+		}
+	}
+}
+
+const timeout = time.Second * 5
+
+func (self *Client) Send(q *Query, c chan<- *Exchange) {
+	id := self.idPool.Fetch()
+	message := newMessage(q, id)
+	exchange := &Exchange{
+		Query: q,
+		Send:  message,
+	}
+	job := &job{
+		id:       id,
+		exchange: exchange,
+		deadline: time.Now().Add(timeout),
+		c:        c,
+	}
+	self.newJobs <- job // set a place in mapping
+
+	e := self.send(message)
+	if e != nil {
+		job.CloseErr(e)
+
+		// release the spot reserved if not timed out
+		self.sendErrors <- job
+	}
+}
+
+func (self *Client) send(m *Message) error {
+	_, e := self.conn.WriteToUDP(m.Packet.Bytes, m.RemoteAddr)
+	return e
 }
 
 func (self *Client) AsyncQuery(q *Query, f func(*Exchange)) {

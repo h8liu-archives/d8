@@ -12,11 +12,10 @@ type Question struct {
 }
 
 func (self *Question) packFlags(out *bytes.Buffer) {
-	var buf [4]byte
+	buf := make([]byte, 4)
 	enc.PutUint16(buf[0:2], self.Type)
 	enc.PutUint16(buf[2:4], self.Class)
-
-	out.Write(buf[:])
+	out.Write(buf)
 }
 
 func (self *Question) pack(out *bytes.Buffer) {
@@ -35,8 +34,8 @@ func (self *Question) unpack(in *bytes.Reader, p []byte) error {
 }
 
 func (self *Question) unpackFlags(in *bytes.Reader) error {
-	var buf [4]byte
-	if _, e := in.Read(buf[:]); e != nil {
+	buf := make([]byte, 4)
+	if _, e := in.Read(buf); e != nil {
 		return e
 	}
 

@@ -11,8 +11,8 @@ import (
 	. "d8/packet/consts"
 )
 
-type Message struct {
-	Packet []byte
+type Packet struct {
+	Bytes []byte
 
 	Id        uint16
 	Flag      uint16
@@ -26,47 +26,47 @@ func randomId() uint16 { return uint16(rand.Uint32()) }
 
 var enc = binary.BigEndian
 
-func Unpack(p []byte) (*Message, error) {
-	m := new(Message)
-	m.Packet = p
+func Unpack(p []byte) (*Packet, error) {
+	m := new(Packet)
+	m.Bytes = p
 	e := m.Unpack()
 
 	return m, e
 }
 
-func (self *Message) Unpack() error {
-	if self.Packet == nil {
+func (self *Packet) Unpack() error {
+	if self.Bytes == nil {
 		return errors.New("nil packet")
 	}
 
-	in := bytes.NewReader(self.Packet)
+	in := bytes.NewReader(self.Bytes)
 
 	if e := self.unpackHeader(in); e != nil {
 		return e
 	}
 
-	if e := self.Question.unpack(in, self.Packet); e != nil {
+	if e := self.Question.unpack(in, self.Bytes); e != nil {
 		return e
 	}
 
-	if e := self.Answer.unpack(in, self.Packet); e != nil {
+	if e := self.Answer.unpack(in, self.Bytes); e != nil {
 		return e
 	}
 
-	if e := self.Authority.unpack(in, self.Packet); e != nil {
+	if e := self.Authority.unpack(in, self.Bytes); e != nil {
 		return e
 	}
 
-	if e := self.Addition.unpack(in, self.Packet); e != nil {
+	if e := self.Addition.unpack(in, self.Bytes); e != nil {
 		return e
 	}
 
 	return nil
 }
 
-func (self *Message) unpackHeader(in *bytes.Reader) error {
-	var buf [12]byte
-	if _, e := in.Read(buf[:]); e != nil {
+func (self *Packet) unpackHeader(in *bytes.Reader) error {
+	buf := make([]byte, 12)
+	if _, e := in.Read(buf); e != nil {
 		return e
 	}
 
@@ -83,8 +83,8 @@ func (self *Message) unpackHeader(in *bytes.Reader) error {
 	return nil
 }
 
-func (self *Message) packHeader(out *bytes.Buffer) {
-	var buf [12]byte
+func (self *Packet) packHeader(out *bytes.Buffer) {
+	buf := make([]byte, 12)
 
 	enc.PutUint16(buf[0:2], self.Id)
 	enc.PutUint16(buf[2:4], self.Flag)
@@ -93,25 +93,25 @@ func (self *Message) packHeader(out *bytes.Buffer) {
 	enc.PutUint16(buf[8:10], self.Authority.LenU16())
 	enc.PutUint16(buf[10:12], self.Addition.LenU16())
 
-	out.Write(buf[:])
+	out.Write(buf)
 }
 
-func (self *Message) PackQuery() []byte {
+func (self *Packet) PackQuery() []byte {
 	out := new(bytes.Buffer)
 
 	self.packHeader(out)
 	self.Question.pack(out)
 
-	self.Packet = out.Bytes() // swap in
-	return self.Packet
+	self.Bytes = out.Bytes() // swap in
+	return self.Bytes
 }
 
-func Q(d *domain.Domain, t uint16) *Message {
+func Q(d *domain.Domain, t uint16) *Packet {
 	return Qid(d, t, randomId())
 }
 
-func Qid(d *domain.Domain, t, id uint16) *Message {
-	m := new(Message)
+func Qid(d *domain.Domain, t, id uint16) *Packet {
+	m := new(Packet)
 
 	m.Id = id
 	m.Flag = 0

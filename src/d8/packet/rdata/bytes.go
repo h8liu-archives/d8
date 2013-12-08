@@ -14,18 +14,18 @@ func (self Bytes) Pack(out *bytes.Buffer) {
 		panic("rdata too long")
 	}
 
-	var buf [2]byte
-	enc.PutUint16(buf[:], uint16(n))
-	out.Write(buf[:])
+	buf := make([]byte, 2)
+	enc.PutUint16(buf, uint16(n))
+	out.Write(buf)
 	out.Write(self)
 }
 
 func UnpackBytes(in *bytes.Reader) (Bytes, error) {
-	var buf [2]byte
-	if _, e := in.Read(buf[:]); e != nil {
+	buf := make([]byte, 2)
+	if _, e := in.Read(buf); e != nil {
 		return nil, e
 	}
-	n := enc.Uint16(buf[:])
+	n := enc.Uint16(buf)
 
 	ret := make([]byte, n)
 	if _, e := in.Read([]byte(ret)); e != nil {
