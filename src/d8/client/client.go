@@ -1,11 +1,12 @@
 package client
 
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
-	"xxd"
 
 	"d8/packet"
 )
@@ -139,7 +140,7 @@ func (self *Client) serve() {
 			}
 
 			if len(timeouts) > 0 {
-				log.Println("timeouts:", now,  timeouts)
+				log.Println("timeouts:", now, timeouts)
 			}
 
 			for _, id := range timeouts {
@@ -184,7 +185,7 @@ func (self *Client) send(m *Message) error {
 	}
 
 	log.Println("send:", m.RemoteAddr)
-	xxd.Print(m.Packet.Bytes)
+	fmt.Print(hex.Dump(m.Packet.Bytes))
 	_, e := self.conn.WriteToUDP(m.Packet.Bytes, m.RemoteAddr)
 	return e
 }
