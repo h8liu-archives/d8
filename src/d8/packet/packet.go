@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math/rand"
 
 	"d8/domain"
@@ -125,4 +126,15 @@ func Qid(d *domain.Domain, t, id uint16) *Packet {
 	m.PackQuery()
 
 	return m
+}
+
+func (self *Packet) String() string {
+	buf := new(bytes.Buffer)
+	fmt.Fprintf(buf, "%d %s\n", self.Id, flagString(self.Flag))
+	fmt.Fprintf(buf, "ques %v\n", self.Question)
+	self.Answer.printTo(buf, "answ")
+	self.Authority.printTo(buf, "auth")
+	self.Addition.printTo(buf, "addi")
+
+	return buf.String()
 }

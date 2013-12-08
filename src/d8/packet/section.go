@@ -29,3 +29,7 @@ func (self Section) unpack(in *bytes.Reader, p []byte) error {
 
 	return nil
 }
+
+func (self Section) printTo(out *bytes.Buffer, name string) {
+	panic("todo")
+}
