@@ -29,6 +29,8 @@ var enc = binary.BigEndian
 func Unpack(p []byte) (*Packet, error) {
 	m := new(Packet)
 	m.Bytes = p
+	m.Question = new(Question)
+
 	e := m.Unpack()
 
 	return m, e
@@ -112,6 +114,10 @@ func Q(d *domain.Domain, t uint16) *Packet {
 
 func Qid(d *domain.Domain, t, id uint16) *Packet {
 	m := new(Packet)
+
+	if t == 0 {
+		t = A
+	}
 
 	m.Id = id
 	m.Flag = 0

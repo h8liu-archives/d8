@@ -7,7 +7,8 @@ import (
 )
 
 type Query struct {
-	Domain *domain.Domain
-	Type   uint16
-	Server *net.UDPAddr
+	Domain    *domain.Domain
+	Type      uint16
+	Server    *net.UDPAddr
+	Recursive bool
 }

@@ -5,13 +5,14 @@ import (
 	"log"
 	"net"
 	"time"
+	"xxd"
 
 	"d8/packet"
 )
 
 type Client struct {
 	conn   *net.UDPConn
-	idPool idPool
+	idPool *idPool
 
 	jobs       map[uint16]*job
 	newJobs    chan *job
@@ -22,7 +23,7 @@ type Client struct {
 
 const (
 	DnsPort    = 53
-	ClientPort = 5353
+	ClientPort = 3553
 )
 
 func NewPort(port uint16) (*Client, error) {
@@ -38,6 +39,8 @@ func NewPort(port uint16) (*Client, error) {
 	ret.sendErrors = make(chan *job, 10)
 	ret.recvs = make(chan *Message, 10)
 	ret.timer = time.Tick(time.Millisecond * 100)
+	ret.idPool = newIdPool()
+	ret.jobs = make(map[uint16]*job)
 
 	go ret.recv()
 	go ret.serve()
@@ -71,11 +74,13 @@ func (self *Client) recv() {
 			continue
 		}
 
-		self.recvs <- &Message{
+		m := &Message{
 			RemoteAddr: addr,
 			Packet:     p,
 			Timestamp:  time.Now(),
 		}
+		log.Println("recv:", m)
+		self.recvs <- m
 
 		buf = newRecvBuf()
 	}
@@ -91,53 +96,64 @@ func (self *Client) delJob(id uint16) {
 var ErrTimeout = errors.New("timeout")
 
 func (self *Client) serve() {
-	select {
-	case job := <-self.newJobs:
-		id := job.id
-		bugOn(self.jobs[id] != nil)
-		self.jobs[id] = job
-	case job := <-self.sendErrors:
-		/*
-			Need to check if it is still the same job. In some rare racing
-			cases, sendErrors will be delayed (like by a send that takes too
-			long), and timeout might trigger first, hence reallocate the id to
-			another job.
-		*/
-		if self.jobs[job.id] == job {
-			// still the same job
-			self.delJob(job.id)
-		}
-	case m := <-self.recvs:
-		id := m.Packet.Id
-		job := self.jobs[id]
-		if job == nil {
-			// this might happen with the timeout window is set too small
-			log.Printf("recved zombie msg with id %d", id)
-		} else {
-			job.CloseRecv(m)
-		}
-	case now := <-self.timer:
-		timeouts := make([]uint16, 0, 1024)
-
-		for id, job := range self.jobs {
-			bugOn(job.id != id)
-			if job.deadline.Before(now) {
-				job.CloseErr(ErrTimeout)
-
-				// we are iterating the map, so delete afterwards for safty
-				timeouts = append(timeouts, id)
+	for {
+		select {
+		case job := <-self.newJobs:
+			log.Println("new:", job.id)
+			id := job.id
+			bugOn(self.jobs[id] != nil)
+			self.jobs[id] = job
+			log.Println("new done")
+		case job := <-self.sendErrors:
+			/*
+				Need to check if it is still the same job. In some rare racing
+				cases, sendErrors will be delayed (like by a send that takes
+				too long), and timeout might trigger first, hence reallocate
+				the id to another job.
+			*/
+			if self.jobs[job.id] == job {
+				// still the same job
+				self.delJob(job.id)
 			}
-		}
+		case m := <-self.recvs:
+			log.Println("recved:", m)
+			id := m.Packet.Id
+			job := self.jobs[id]
+			if job == nil {
+				// this might happen with the timeout window is set too small
+				log.Printf("recved zombie msg with id %d", id)
+			} else {
+				job.CloseRecv(m)
+			}
+		case now := <-self.timer:
+			timeouts := make([]uint16, 0, 1024)
 
-		for _, id := range timeouts {
-			self.delJob(id)
+			for id, job := range self.jobs {
+				bugOn(job.id != id)
+				if job.deadline.Before(now) {
+					job.CloseErr(ErrTimeout)
+
+					// iterating the map, so delete afterwards for safty
+					timeouts = append(timeouts, id)
+				}
+			}
+
+			if len(timeouts) > 0 {
+				log.Println("timeouts:", now,  timeouts)
+			}
+
+			for _, id := range timeouts {
+				self.delJob(id)
+			}
 		}
 	}
 }
 
-const timeout = time.Second * 5
+const timeout = time.Second * 3
 
 func (self *Client) Send(q *Query, c chan<- *Exchange) {
+	log.Println("query:", q)
+
 	id := self.idPool.Fetch()
 	message := newMessage(q, id)
 	exchange := &Exchange{
@@ -150,6 +166,7 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 		deadline: time.Now().Add(timeout),
 		c:        c,
 	}
+
 	self.newJobs <- job // set a place in mapping
 
 	e := self.send(message)
@@ -162,6 +179,12 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 }
 
 func (self *Client) send(m *Message) error {
+	if m.RemoteAddr.Port == 0 {
+		m.RemoteAddr.Port = DnsPort
+	}
+
+	log.Println("send:", m.RemoteAddr)
+	xxd.Print(m.Packet.Bytes)
 	_, e := self.conn.WriteToUDP(m.Packet.Bytes, m.RemoteAddr)
 	return e
 }
