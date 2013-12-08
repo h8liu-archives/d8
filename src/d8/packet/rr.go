@@ -72,46 +72,14 @@ func unpackRR(in *bytes.Reader, p []byte) (*RR, error) {
 
 func (self *RR) PrintTo(p *printer.Printer) {
 	buf := new(bytes.Buffer)
-	fmt.Fprintf(buf, "%s %s ", self.Domain.String(), typeString(self.Type))
+	fmt.Fprintf(buf, "%s %s ", self.Domain.String(), TypeString(self.Type))
 	if self.Class != IN {
-		fmt.Fprintf(buf, "%s ", classString(self.Class))
+		fmt.Fprintf(buf, "%s ", ClassString(self.Class))
 	}
 	self.Rdata.PrintTo(buf)
 	fmt.Fprintf(buf, " %s", ttlString(self.TTL))
 
 	p.Println(buf.String())
-}
-
-var typeStrings = map[uint16]string{
-	A:     "a",
-	AAAA:  "aaaa",
-	NS:    "ns",
-	MX:    "mx",
-	CNAME: "cname",
-	TXT:   "txt",
-}
-
-func typeString(t uint16) string {
-	s, found := typeStrings[t]
-	if found {
-		return s
-	}
-	return fmt.Sprintf("t%d", t)
-}
-
-var classStrings = map[uint16]string{
-	IN: "in",
-	CS: "cs",
-	CH: "ch",
-	HS: "hs",
-}
-
-func classString(c uint16) string {
-	s, found := classStrings[c]
-	if found {
-		return s
-	}
-	return fmt.Sprintf("c%d", c)
 }
 
 func ttlString(t uint32) string {

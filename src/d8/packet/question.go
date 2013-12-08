@@ -49,9 +49,9 @@ func (self *Question) unpackFlags(in *bytes.Reader) error {
 }
 
 func (self *Question) String() string {
-	ret := fmt.Sprintf("%s %s", self.Domain.String(), typeString(self.Type))
+	ret := fmt.Sprintf("%s %s", self.Domain.String(), TypeString(self.Type))
 	if self.Class != IN {
-		ret += fmt.Sprintf(" %s", classString(self.Class))
+		ret += fmt.Sprintf(" %s", ClassString(self.Class))
 	}
 	return ret
 }

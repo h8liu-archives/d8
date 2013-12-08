@@ -1,5 +1,9 @@
 package consts
 
+import (
+	"fmt"
+)
+
 // rdata type
 const (
 	A     = 1
@@ -28,3 +32,35 @@ const (
 	CH = 3
 	HS = 4
 )
+
+var typeStrings = map[uint16]string{
+	A:     "a",
+	AAAA:  "aaaa",
+	NS:    "ns",
+	MX:    "mx",
+	CNAME: "cname",
+	TXT:   "txt",
+}
+
+func TypeString(t uint16) string {
+	s, found := typeStrings[t]
+	if found {
+		return s
+	}
+	return fmt.Sprintf("t%d", t)
+}
+
+var classStrings = map[uint16]string{
+	IN: "in",
+	CS: "cs",
+	CH: "ch",
+	HS: "hs",
+}
+
+func ClassString(c uint16) string {
+	s, found := classStrings[c]
+	if found {
+		return s
+	}
+	return fmt.Sprintf("c%d", c)
+}

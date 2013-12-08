@@ -22,12 +22,15 @@ func newMessage(q *Query, id uint16) *Message {
 	}
 }
 
-func (self *Message) PrintTo(p *printer.Printer) {
-	if self.RemoteAddr.Port == DnsPort {
-		p.Printf("@%v", self.RemoteAddr.IP)
-	} else {
-		p.Printf("@%v", self.RemoteAddr)
+func addrString(a *net.UDPAddr) string {
+	if a.Port == 0 || a.Port == DnsPort {
+		return a.IP.String()
 	}
+	return a.String()
+}
+
+func (self *Message) PrintTo(p *printer.Printer) {
+	p.Printf("@%s", addrString(self.RemoteAddr))
 	self.Packet.PrintTo(p)
 }
 
