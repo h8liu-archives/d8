@@ -1,8 +1,8 @@
 package term
 
 import (
-	"net"
 	"d8/domain"
+	"net"
 )
 
 type Cursor interface {
