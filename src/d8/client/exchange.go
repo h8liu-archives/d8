@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"printer"
 )
 
@@ -34,6 +35,23 @@ func (self *Exchange) printSend(p *printer.Printer) {
 	}
 }
 
+func (self *Exchange) printTimeTaken(p *printer.Printer) {
+	d := self.Recv.Timestamp.Sub(self.Send.Timestamp)
+	n := d.Nanoseconds()
+	var s string
+	if n < 1e3 {
+		s = fmt.Sprintf("%dns", n)
+	} else if n < 1e6 {
+		s = fmt.Sprintf("%.1fus", float64(n)/1e3)
+	} else if n < 1e9 {
+		s = fmt.Sprintf("%.2fms", float64(n)/1e6)
+	} else {
+		s = fmt.Sprintf("%.3fs", float64(n)/1e9)
+	}
+
+	p.Printf("(in %v)", s)
+}
+
 func (self *Exchange) printRecv(p *printer.Printer) {
 	switch self.Query.PrintFlag {
 	case PrintAll:
@@ -51,6 +69,7 @@ func (self *Exchange) printRecv(p *printer.Printer) {
 	case PrintReply:
 		if self.Recv != nil {
 			self.Recv.Packet.PrintTo(p)
+			self.printTimeTaken(p)
 		}
 		if self.Error != nil {
 			p.Printf("error %v", self.Error)
