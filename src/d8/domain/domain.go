@@ -24,6 +24,9 @@ func (self *Domain) Equals(other *Domain) bool {
 }
 
 func (self *Domain) String() string {
+	if self.IsRoot() {
+		return "."
+	}
 	return self.name
 }
 

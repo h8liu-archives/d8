@@ -24,6 +24,10 @@ func Unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
 		switch t {
 		case A:
 			return UnpackIPv4(in, n)
+		case NS:
+			return UnpackDomain(in, n, p)
+		case AAAA:
+			return UnpackIPv6(in, n)
 		}
 	}
 	return UnpackBytes(in, n)

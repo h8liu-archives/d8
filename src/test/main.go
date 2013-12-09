@@ -20,9 +20,9 @@ func noError(e error) {
 
 func main() {
 	q := &client.Query{
-		Domain:    D("liulonnie.net"),
-		Type:      A,
-		Server:    &net.UDPAddr{IP: net.ParseIP("74.220.195.131")},
+		Domain:    D("."),
+		Type:      NS,
+		Server:    &net.UDPAddr{IP: net.ParseIP("198.41.0.4")},
 		Printer:   printer.New(os.Stdout),
 		PrintFlag: client.PrintReply,
 	}

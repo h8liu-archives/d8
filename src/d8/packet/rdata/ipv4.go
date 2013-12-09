@@ -16,7 +16,7 @@ func UnpackIPv4(in *bytes.Reader, n uint16) (IPv4, error) {
 	buf := make([]byte, 4)
 	_, e := in.Read(buf)
 	if e != nil {
-		panic("impossible")
+		return nil, e
 	}
 
 	return IPv4(net.IPv4(buf[0], buf[1], buf[2], buf[3])), nil
