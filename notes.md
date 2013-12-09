@@ -3,7 +3,7 @@
     d8/domain       Domain name and registrar parsing
     d8/packet       DNS packet parsing
     d8/client       Async UDP4 DNS client
-    d8/term         Interactive and recursive console
+    d8/term         Interactive and recursive terminal for a task
     d8/tasks        Common query logics
     d8/bin/d8       Program that can fire single queries, back queries, 
                     or listen to TCP/HTTP input
@@ -16,7 +16,20 @@
 - shell
 - cmds
 
-# console design
+# use case
+
+// for an interactive one
+task, e := tasks.Parse(line)
+noError(e)
+t := term.NewTerm(c)
+t.LogTo(os.Stdout)
+t.Run(task)
+t.Query(q)
+
+// and a crawler will just run a
+// bunch of these go routines
+
+# session log
 
     $ q liulonnie.net @74.220.195.131
     #1090 auth
