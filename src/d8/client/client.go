@@ -114,11 +114,13 @@ func (self *Client) serve() {
 		case m := <-self.recvs:
 			id := m.Packet.Id
 			job := self.jobs[id]
+			bugOn(job.id != id)
 			if job == nil {
 				// this might happen with the timeout window is set too small
 				log.Printf("recved zombie msg with id %d", id)
 			} else {
 				job.CloseRecv(m)
+				self.delJob(id)
 			}
 		case now := <-self.timer:
 			timeouts := make([]uint16, 0, 1024)

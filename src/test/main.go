@@ -26,4 +26,5 @@ func main() {
 	t.Log = os.Stdout
 
 	t.Query(D("."), NS, net.ParseIP("198.41.0.4"))
+	t.Query(D("liulonnie.net"), A, net.ParseIP("74.220.195.131"))
 }
