@@ -7,23 +7,23 @@ import (
 
 	"d8/client"
 	. "d8/domain"
-	"d8/packet"
+	pa "d8/packet"
 	"d8/packet/consts"
 	"d8/packet/rdata"
-	"d8/term"
+	. "d8/term"
 )
 
 type Recur struct {
-	Domain   *Domain
-	Type     uint16
-	Start    *ZoneServers
-	HeadLess bool
+	Domain    *Domain
+	Type      uint16
+	StartWith *ZoneServers
+	HeadLess  bool
 
 	Error   error
-	Return  int            // valid when Error is not null
-	Packet  *packet.Packet // valid when Return is Okay
-	Answers []*packet.RR
-	FoundIn *Domain // valid when Return is Okay
+	Return  int        // valid when Error is not null
+	Packet  *pa.Packet // valid when Return is Okay
+	Answers []*pa.RR
+	EndWith *ZoneServers // valid when Return is Okay
 }
 
 func NewRecur(d *Domain) *Recur {
@@ -37,7 +37,7 @@ func NewRecurType(d *Domain, t uint16) *Recur {
 	}
 }
 
-var _ term.Task = new(Recur)
+var _ Task = new(Recur)
 
 var roots = MakeRoots()
 
@@ -77,15 +77,15 @@ func MakeRoots() *ZoneServers {
 }
 
 func (self *Recur) begin() *ZoneServers {
-	if self.Start != nil {
-		return self.Start
+	if self.StartWith != nil {
+		return self.StartWith
 	}
 
 	// cached = self.cache.Find(self.Domain.Registrar())
 	return roots
 }
 
-func (self *Recur) Run(c term.Cursor) {
+func (self *Recur) Run(c Cursor) {
 	if !self.HeadLess {
 		c.Printf("recur %v %s {", self.Domain, consts.TypeString(self.Type))
 		c.ShiftIn()
@@ -108,7 +108,7 @@ func (self *Recur) Run(c term.Cursor) {
 	}
 }
 
-func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
+func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 	servers := z.prepareOrder()
 	tried := make(map[uint32]bool)
 
@@ -160,7 +160,7 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 			p := attempt.Recv.Packet
 
 			rcode := p.Rcode()
-			if !(rcode == packet.RcodeOkay || rcode == packet.RcodeNameError) {
+			if !(rcode == pa.RcodeOkay || rcode == pa.RcodeNameError) {
 				c.Printf("// server error %s, rcode=%d", server.Domain, rcode)
 			}
 
@@ -169,17 +169,17 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 				self.Return = Okay
 				self.Packet = p
 				self.Answers = ans
-				self.FoundIn = z.Zone()
+				self.EndWith = z
 
 				return nil, nil
 			}
 
-			redirects := self.redirects(p, z.Zone(), c)
-			if redirects == nil {
+			next := self.next(p, z.Zone(), c)
+			if next == nil {
 				self.Return = NotExists
 				c.Print("// domain does not exist")
 			}
-			return redirects, nil
+			return next, nil
 		}
 	}
 
@@ -188,7 +188,7 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 	return nil, nil
 }
 
-func (self *Recur) redirects(p *packet.Packet, z *Domain, c term.Cursor) *ZoneServers {
+func (self *Recur) next(p *pa.Packet, z *Domain, c Cursor) *ZoneServers {
 	redirects := p.SelectRedirects(z, self.Domain)
 	if len(redirects) == 0 {
 		return nil
