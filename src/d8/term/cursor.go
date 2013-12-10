@@ -76,12 +76,14 @@ func (self *cursor) T(t Task) (*Branch, error) {
 }
 
 func (self *cursor) q(d *domain.Domain, t uint16, at net.IP) *Leaf {
-	q := &client.Query{
-		Domain: d,
-		Type:   t,
-		Server: &net.UDPAddr{
-			IP:   at,
-			Port: client.DNSPort,
+	q := &client.QueryPrinter{
+		Query: &client.Query{
+			Domain: d,
+			Type:   t,
+			Server: &net.UDPAddr{
+				IP:   at,
+				Port: client.DNSPort,
+			},
 		},
 		Printer:   self.Printer,
 		PrintFlag: self.PrintFlag,

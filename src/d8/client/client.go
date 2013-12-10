@@ -148,16 +148,17 @@ func (self *Client) serve() {
 
 const timeout = time.Second * 3
 
-func (self *Client) Send(q *Query, c chan<- *Exchange) {
+func (self *Client) Send(q *QueryPrinter, c chan<- *Exchange) {
 	id := self.idPool.Fetch()
-	message := newMessage(q, id)
+	message := newMessage(q.Query, id)
 	if message.RemoteAddr.Port == 0 {
 		message.RemoteAddr.Port = DNSPort
 	}
 
 	exchange := &Exchange{
-		Query: q,
-		Send:  message,
+		Query:     q.Query,
+		Send:      message,
+		PrintFlag: q.PrintFlag,
 	}
 	job := &job{
 		id:       id,
@@ -187,7 +188,7 @@ func (self *Client) send(m *Message) error {
 	return e
 }
 
-func (self *Client) AsyncQuery(q *Query, f func(*Exchange)) {
+func (self *Client) AsyncQuery(q *QueryPrinter, f func(*Exchange)) {
 	c := make(chan *Exchange)
 	go func() {
 		f(<-c)
@@ -196,7 +197,7 @@ func (self *Client) AsyncQuery(q *Query, f func(*Exchange)) {
 	self.Send(q, c)
 }
 
-func (self *Client) Query(q *Query) *Exchange {
+func (self *Client) Query(q *QueryPrinter) *Exchange {
 	c := make(chan *Exchange, 1) // we need a slot in case of send error
 	self.Send(q, c)
 

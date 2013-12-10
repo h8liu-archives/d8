@@ -6,10 +6,11 @@ import (
 )
 
 type Exchange struct {
-	Query *Query
-	Send  *Message
-	Recv  *Message
-	Error error
+	Query     *Query
+	Send      *Message
+	Recv      *Message
+	Error     error
+	PrintFlag int
 }
 
 func (self *Exchange) PrintTo(p *printer.Printer) {
@@ -21,7 +22,7 @@ func (self *Exchange) printSend(p *printer.Printer) {
 	p.Printf("%s {", self.Query.String())
 	p.ShiftIn()
 
-	switch self.Query.PrintFlag {
+	switch self.PrintFlag {
 	case PrintAll:
 		p.Print("send {")
 		p.ShiftIn()
@@ -53,7 +54,7 @@ func (self *Exchange) printTimeTaken(p *printer.Printer) {
 }
 
 func (self *Exchange) printRecv(p *printer.Printer) {
-	switch self.Query.PrintFlag {
+	switch self.PrintFlag {
 	case PrintAll:
 		if self.Recv != nil {
 			p.Print("recv {")

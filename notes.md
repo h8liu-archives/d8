@@ -32,18 +32,24 @@ t.Query(q)
 # session log
 
     $ q liulonnie.net @74.220.195.131
-    #1090 auth
-    ques liulonnie.net
-    answ {
-        liulonnie.net a 66.147.240.181 4h
+    liulonnie.net a @74.220.195.131 {
+        error timeout
     }
-    auth {
-        ...
+    // retry
+    liulonnie.net a @74.220.195.131 {
+        #1090 auth
+        ques liulonnie.net
+        answ {
+            liulonnie.net a 66.147.240.181 4h
+        }
+        auth {
+            ...
+        }
+        addi {
+            ...
+        }
+        (in 20ms)
     }
-    addi {
-        ...
-    }
-    (in 20ms)
 
     $ recur liulonnie.net
     // some comment

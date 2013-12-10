@@ -13,9 +13,9 @@ import (
 )
 
 type Recur struct {
-	Domain *Domain
-	Type   uint16
-	Start  *ZoneServers
+	Domain   *Domain
+	Type     uint16
+	Start    *ZoneServers
 	HeadLess bool
 
 	Error   error
@@ -57,8 +57,8 @@ func MakeRoots() *ZoneServers {
 	}
 
 	// see en.wikipedia.org/wiki/Root_name_server for reference
-	// (since year 2012)
-	ns("a", "192.41.0.4")     // Verisign
+	// (last update: year 2012)
+	ns("a", "198.41.0.4")     // Verisign
 	ns("b", "192.228.79.201") // USC-ISI
 	ns("c", "192.33.4.12")    // Cogent
 	ns("d", "128.8.10.90")    // U Maryland

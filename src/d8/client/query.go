@@ -14,12 +14,20 @@ const (
 	PrintReply
 )
 
-type Query struct {
-	Domain    *domain.Domain
-	Type      uint16
-	Server    *net.UDPAddr
+type QueryPrinter struct {
+	*Query
+
 	Printer   *printer.Printer
 	PrintFlag int
+}
+
+type Query struct {
+	Domain *domain.Domain
+	Type   uint16
+	Server *net.UDPAddr
+
+	Zone       *domain.Domain
+	ServerName *domain.Domain
 }
 
 func (self *Query) String() string {
