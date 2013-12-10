@@ -9,7 +9,6 @@ import (
 	. "d8/domain"
 	pa "d8/packet"
 	"d8/packet/consts"
-	"d8/packet/rdata"
 	. "d8/term"
 )
 
@@ -97,6 +96,7 @@ func (self *Recur) Run(c Cursor) {
 	for zone != nil {
 		zone, e = self.query(c, zone)
 		if e != nil {
+			c.Printf("error %v", e)
 			self.Error = e
 			return
 		}
@@ -174,7 +174,7 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 				return nil, nil
 			}
 
-			next := self.next(p, z.Zone(), c)
+			next := ExtractServers(p, z.Zone(), self.Domain, c)
 			if next == nil {
 				self.Return = NotExists
 				c.Print("// domain does not exist")
@@ -186,29 +186,4 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 	c.Print("// no reachable server")
 	self.Return = Lost
 	return nil, nil
-}
-
-func (self *Recur) next(p *pa.Packet, z *Domain, c Cursor) *ZoneServers {
-	redirects := p.SelectRedirects(z, self.Domain)
-	if len(redirects) == 0 {
-		return nil
-	}
-
-	next := redirects[0].Domain
-	ret := NewZoneServers(next)
-
-	for _, rr := range redirects {
-		if !rr.Domain.Equal(next) {
-			c.Printf("// ignore different subzone: %v", rr.Domain)
-			continue
-		}
-
-		ns := (*Domain)(rr.Rdata.(*rdata.Domain))
-		rrs := p.SelectIPs(ns) // glued IPs
-		for _, iprr := range rrs {
-			ret.Add(ns, (net.IP)(iprr.Rdata.(rdata.IPv4)))
-		}
-	}
-
-	return ret
 }

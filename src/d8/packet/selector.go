@@ -27,6 +27,15 @@ func (self *AnswerSelector) Select(rr *RR, _ int) bool {
 	return self.Type == rr.Type || (self.Type == A && rr.Type == CNAME)
 }
 
+type RecordSelector struct {
+	Domain *domain.Domain
+	Type   uint16
+}
+
+func (self *RecordSelector) Select(rr *RR, _ int) bool {
+	return rr.Domain.Equal(self.Domain) && self.Type == rr.Type
+}
+
 type RedirectSelector struct{ Zone, Domain *domain.Domain }
 
 func (self *RedirectSelector) Select(rr *RR, _ int) bool {

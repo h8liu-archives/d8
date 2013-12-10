@@ -7,6 +7,9 @@ import (
 	"time"
 
 	. "d8/domain"
+	"d8/packet"
+	"d8/packet/rdata"
+	. "d8/term"
 )
 
 // ZoneServers keep records name servers and their IPs if any
@@ -100,5 +103,34 @@ func (self *ZoneServers) prepareOrder() []*server {
 
 	ret = shuffleAppend(ret, resolved)
 	ret = shuffleAppend(ret, unresolved)
+	return ret
+}
+
+func (self *ZoneServers) Serves(d *Domain) bool {
+	return self.d.IsZoneOf(d)
+}
+
+func ExtractServers(p *packet.Packet, z *Domain, d *Domain, c Cursor) *ZoneServers {
+	redirects := p.SelectRedirects(z, d)
+	if len(redirects) == 0 {
+		return nil
+	}
+
+	next := redirects[0].Domain
+	ret := NewZoneServers(next)
+
+	for _, rr := range redirects {
+		if !rr.Domain.Equal(next) {
+			c.Printf("// ignore different subzone: %v", rr.Domain)
+			continue
+		}
+
+		ns := rdata.ToDomain(rr.Rdata)
+		rrs := p.SelectIPs(ns) // glued IPs
+		for _, iprr := range rrs {
+			ret.Add(ns, rdata.ToIPv4(iprr.Rdata))
+		}
+	}
+
 	return ret
 }

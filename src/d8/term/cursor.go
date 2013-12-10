@@ -83,10 +83,12 @@ func (self *cursor) q(q *client.Query) *Leaf {
 	ret := newLeaf(self.Retry)
 
 	for i := 0; i < self.Retry; i++ {
+		if i > 0 {
+			self.Print("// retry")
+		}
 		answer := self.client.Query(qp)
 		ret.add(answer)
 		if answer.Timeout() {
-			self.Print("// retry")
 			continue
 		}
 		break
