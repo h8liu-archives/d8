@@ -76,12 +76,11 @@ func (self *cursor) q(d *domain.Domain, t uint16, at net.IP) *Leaf {
 		PrintFlag: self.PrintFlag,
 	}
 
-	ret := new(Leaf)
-	ret.Attempts = make([]*client.Exchange, 0, self.Retry)
+	ret := newLeaf(self.Retry)
 
 	for i := 0; i < self.Retry; i++ {
 		answer := self.client.Query(q)
-		ret.Attempts = append(ret.Attempts, answer)
+		ret.add(answer)
 		if answer.Timeout() {
 			self.Print("// retry")
 			continue

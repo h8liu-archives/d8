@@ -39,6 +39,6 @@ func (self *stack) Top() *Branch {
 func (self *stack) TopAdd(n Node) {
 	t := self.Top()
 	if t != nil {
-		t.Add(n)
+		t.add(n)
 	}
 }

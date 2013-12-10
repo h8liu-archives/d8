@@ -5,6 +5,8 @@ type Branch struct {
 	Children []Node
 }
 
+var _ Node = new(Branch)
+
 func newBranch(t Task) *Branch {
 	ret := new(Branch)
 	ret.Task = t
@@ -13,9 +15,11 @@ func newBranch(t Task) *Branch {
 	return ret
 }
 
-func (self *Branch) Add(n Node) {
+func (self *Branch) add(n Node) {
 	if self == nil {
 		return
 	}
 	self.Children = append(self.Children, n)
 }
+
+func (self *Branch) IsLeaf() bool { return false }
