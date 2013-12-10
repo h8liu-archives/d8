@@ -2,6 +2,7 @@ package client
 
 import (
 	"math/rand"
+	"time"
 )
 
 const idCount = 65536
@@ -12,6 +13,7 @@ type idPool struct {
 	nusing   int
 	returns  chan uint16
 	prepared chan uint16
+	rand *rand.Rand
 }
 
 func newIdPool() *idPool {
@@ -19,6 +21,7 @@ func newIdPool() *idPool {
 	ret.using = make([]bool, idCount)
 	ret.returns = make(chan uint16, 10)
 	ret.prepared = make(chan uint16, nprepare)
+	ret.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	go ret.serve()
 
@@ -27,7 +30,7 @@ func newIdPool() *idPool {
 
 func (self *idPool) pick() uint16 {
 	for {
-		ret := uint16(rand.Uint32())
+		ret := uint16(self.rand.Uint32())
 		if !self.using[ret] {
 			return ret
 		}
