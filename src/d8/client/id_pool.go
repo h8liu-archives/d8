@@ -13,7 +13,7 @@ type idPool struct {
 	nusing   int
 	returns  chan uint16
 	prepared chan uint16
-	rand *rand.Rand
+	rand     *rand.Rand
 }
 
 func newIdPool() *idPool {

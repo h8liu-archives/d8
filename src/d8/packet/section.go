@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"printer"
+
+	. "d8/packet/consts"
 )
 
 type Section []*RR
@@ -54,4 +56,17 @@ func (self Section) PrintNameTo(p *printer.Printer, name string) {
 		p.ShiftOut()
 		p.Print("}")
 	}
+}
+
+func (self Section) selectAndAppend(s Selector, section int, ret []*RR) []*RR {
+	for _, rr := range self {
+		if rr.Class != IN {
+			continue
+		}
+		if s.Select(rr, section) {
+			ret = append(ret, rr)
+		}
+	}
+
+	return ret
 }

@@ -21,3 +21,11 @@ func newLeaf(retry int) *Leaf {
 func (self *Leaf) add(e *client.Exchange) {
 	self.Attempts = append(self.Attempts, e)
 }
+
+func (self *Leaf) Last() *client.Exchange {
+	n := len(self.Attempts)
+	if n == 0 {
+		return nil
+	}
+	return self.Attempts[n-1]
+}

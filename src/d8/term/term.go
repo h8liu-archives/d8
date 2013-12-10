@@ -3,6 +3,7 @@ package term
 import (
 	"io"
 	"net"
+	"os"
 
 	"d8/client"
 	"d8/domain"
@@ -24,10 +25,42 @@ func New(c *client.Client) *Term {
 	return ret
 }
 
-func (self *Term) Task(t Task) *Branch {
-	return newCursor(self).T(t)
+func (self *Term) T(t Task) *Branch {
+	b, e := newCursor(self).T(t)
+	if e != nil {
+		panic(e)
+	}
+	return b
 }
 
-func (self *Term) Query(d *domain.Domain, t uint16, at net.IP) *Leaf {
-	return newCursor(self).Q(d, t, at)
+func (self *Term) Q(d *domain.Domain, t uint16, at net.IP) *Leaf {
+	q, e := newCursor(self).Q(d, t, at)
+	if e != nil {
+		panic(e)
+	}
+	return q
+}
+
+var std *Term
+
+func makeStd() *Term {
+	if std == nil {
+		c, e := client.New()
+		if e != nil {
+			panic(e)
+		}
+
+		std = New(c)
+		std.Log = os.Stdout
+	}
+
+	return std
+}
+
+func T(t Task) *Branch {
+	return makeStd().T(t)
+}
+
+func Q(d *domain.Domain, t uint16, at net.IP) *Leaf {
+	return makeStd().Q(d, t, at)
 }

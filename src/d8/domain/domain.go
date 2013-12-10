@@ -13,7 +13,7 @@ type Domain struct {
 	labels []string
 }
 
-func (self *Domain) Equals(other *Domain) bool {
+func (self *Domain) Equal(other *Domain) bool {
 	if self == nil {
 		return other == nil
 	}
@@ -124,7 +124,7 @@ func (self *Domain) IsParentOf(other *Domain) bool {
 }
 
 func (self *Domain) IsChildOf(other *Domain) bool {
-	if self.Equals(other) {
+	if self.Equal(other) {
 		return false
 	}
 	return strings.HasSuffix(self.name, other.name)
@@ -163,6 +163,16 @@ func (self *Domain) RegParts() (registered *Domain, registrar *Domain) {
 		cur = parent
 		parent = parent.Parent()
 	}
+}
+
+func (self *Domain) Registered() *Domain {
+	ret, _ := self.RegParts()
+	return ret
+}
+
+func (self *Domain) Registrar() *Domain {
+	_, ret := self.RegParts()
+	return ret
 }
 
 func (self *Domain) IsRegistrar() bool {

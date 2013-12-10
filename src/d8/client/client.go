@@ -21,13 +21,17 @@ type Client struct {
 }
 
 const (
-	DNSPort    = 53
-	ClientPort = 3553
+	DNSPort = 53
 )
 
 func NewPort(port uint16) (*Client, error) {
 	ret := new(Client)
-	addr := &net.UDPAddr{Port: ClientPort}
+
+	addr := &net.UDPAddr{Port: int(port)}
+	if port == 0 {
+		addr = nil
+	}
+
 	var e error
 	ret.conn, e = net.ListenUDP("udp4", addr)
 	if e != nil {
@@ -48,7 +52,7 @@ func NewPort(port uint16) (*Client, error) {
 }
 
 func New() (*Client, error) {
-	return NewPort(ClientPort)
+	return NewPort(0)
 }
 
 const packetMaxSize = 512

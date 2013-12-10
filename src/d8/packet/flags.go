@@ -16,12 +16,12 @@ const (
 	RcodeMask = 0xf
 	OpMask    = 0x3 << 11
 
-	OpQuery = iota << 11
-	OpIquery
-	OpStatus
+	OpQuery  = 0 << 11
+	OpIquery = 1 << 11
+	OpStatus = 2 << 11
 
-	RcodeOkay = iota
-	RcodeFormatError
+	RcodeOkay        = 0
+	RcodeFormatError = iota
 	RcodeServerFail
 	RcodeNameError
 	RcodeNotImplement
@@ -48,6 +48,10 @@ func (self *flagTags) String() string {
 	return strings.Join(self.tags, " ")
 }
 
+func Rcode(flag uint16) uint16 {
+	return flag & RcodeMask
+}
+
 func flagString(flag uint16) string {
 	t := newFlagTags()
 
@@ -59,7 +63,7 @@ func flagString(flag uint16) string {
 	t.Tag((flag&FlagRD) != 0, "rec-desir")
 	t.Tag((flag&FlagRA) != 0, "rec-avail")
 
-	rcode := flag & RcodeMask
+	rcode := Rcode(flag)
 	t.Tag(rcode == RcodeFormatError, "fmt-err")
 	t.Tag(rcode == RcodeServerFail, "serv-fail")
 	t.Tag(rcode == RcodeNameError, "name-err")

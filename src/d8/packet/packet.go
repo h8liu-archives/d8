@@ -23,6 +23,10 @@ type Packet struct {
 	Addition  Section
 }
 
+func (self *Packet) Rcode() uint16 {
+	return Rcode(self.Flag)
+}
+
 func randomId() uint16 { return uint16(rand.Uint32()) }
 
 var enc = binary.BigEndian
@@ -138,4 +142,25 @@ func (self *Packet) PrintTo(p *printer.Printer) {
 
 func (self *Packet) String() string {
 	return printer.String(self)
+}
+
+func (self *Packet) SelectWith(s Selector) []*RR {
+	ret := make([]*RR, 0, 10)
+	ret = self.Answer.selectAndAppend(s, SecAnsw, ret)
+	ret = self.Authority.selectAndAppend(s, SecAuth, ret)
+	ret = self.Addition.selectAndAppend(s, SecAddi, ret)
+
+	return ret
+}
+
+func (self *Packet) SelectIPs(d *domain.Domain) []*RR {
+	return self.SelectWith(&IPSelector{d})
+}
+
+func (self *Packet) SelectRedirects(z *domain.Domain) []*RR {
+	return self.SelectWith(&RedirectSelector{z})
+}
+
+func (self *Packet) SelectAnswers(d *domain.Domain, t uint16) []*RR {
+	return self.SelectWith(&AnswerSelector{d, t})
 }
