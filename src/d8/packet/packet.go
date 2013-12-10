@@ -36,12 +36,12 @@ func Unpack(p []byte) (*Packet, error) {
 	m.Bytes = p
 	m.Question = new(Question)
 
-	e := m.Unpack()
+	e := m.unpack()
 
 	return m, e
 }
 
-func (self *Packet) Unpack() error {
+func (self *Packet) unpack() error {
 	if self.Bytes == nil {
 		return errors.New("nil packet")
 	}
@@ -163,4 +163,8 @@ func (self *Packet) SelectRedirects(z, d *domain.Domain) []*RR {
 
 func (self *Packet) SelectAnswers(d *domain.Domain, t uint16) []*RR {
 	return self.SelectWith(&AnswerSelector{d, t})
+}
+
+func (self *Packet) SelectRecords(d *domain.Domain, t uint16) []*RR {
+	return self.SelectWith(&RecordSelector{d, t})
 }

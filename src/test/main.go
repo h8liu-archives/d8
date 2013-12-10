@@ -5,9 +5,9 @@ import (
 	"log"
 	"net"
 
-	"d8/client"
+	// "d8/client"
 	. "d8/domain"
-	. "d8/packet/consts"
+	//. "d8/packet/consts"
 	"d8/tasks"
 	"d8/term"
 )
@@ -23,7 +23,9 @@ func ip(s string) net.IP {
 }
 
 func main() {
-	term.Q(client.Qs(".", NS, "198.41.0.4"))
-	term.Q(client.Qs("liulonnie.net", NS, "74.220.195.131"))
-	term.T(tasks.NewRecurType(D("www.yahoo.com"), A))
+	// term.Q(client.Qs(".", NS, "198.41.0.4"))
+	// term.Q(client.Qs("liulonnie.net", NS, "74.220.195.131"))
+	// term.T(tasks.NewRecurType(D("www.yahoo.com"), A))
+	term.T(tasks.NewIPs(D("www.yahoo.com")))
+	term.T(tasks.NewIPs(D("www.microsoft.com")))
 }

@@ -24,3 +24,7 @@ func UnpackDomain(in *bytes.Reader, n uint16, p []byte) (*Domain, error) {
 	return (*Domain)(d), e
 
 }
+
+func ToDomain(r Rdata) *domain.Domain {
+	return (*domain.Domain)(r.(*Domain))
+}

@@ -29,3 +29,7 @@ func (self IPv4) PrintTo(out *bytes.Buffer) {
 func (self IPv4) Pack() []byte {
 	return net.IP(self).To4()
 }
+
+func ToIPv4(r Rdata) net.IP {
+	return (net.IP)(r.(IPv4))
+}
