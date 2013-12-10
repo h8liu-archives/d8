@@ -35,7 +35,7 @@ func newCursor(t *Term) *cursor {
 
 const (
 	MaxDepth = 10
-	MaxQuery = 100
+	MaxQuery = 300
 )
 
 var (
