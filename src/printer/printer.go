@@ -16,7 +16,13 @@ type Printer struct {
 
 var _ Interface = new(Printer)
 
+// Returns a new printer that writes to w
+// if w is nil, than all prints to the printer will be noops
 func New(w io.Writer) *Printer {
+	if w == nil {
+		w = noop
+	}
+
 	return &Printer{
 		Indent: "    ",
 		Writer: w,

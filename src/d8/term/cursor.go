@@ -1,8 +1,6 @@
 package term
 
 import (
-	"bytes"
-	"io"
 	"net"
 
 	"d8/client"
@@ -21,8 +19,6 @@ type cursor struct {
 	*printer.Printer
 	*Term // conveniently inherits the term options
 	*stack
-
-	log *bytes.Buffer
 }
 
 var _ Cursor = new(cursor)
@@ -31,14 +27,8 @@ func newCursor(t *Term) *cursor {
 	ret := new(cursor)
 
 	ret.Term = t
-	ret.log = new(bytes.Buffer)
 	ret.stack = newStack()
-
-	if t.Log == nil {
-		ret.Printer = printer.New(ret.log)
-	} else {
-		ret.Printer = printer.New(io.MultiWriter(t.Log, ret.log))
-	}
+	ret.Printer = printer.New(t.Log)
 
 	return ret
 }
