@@ -31,8 +31,8 @@ type Query struct {
 }
 
 func Server(ip net.IP) *net.UDPAddr {
-	return &net.UDPAddr {
-		IP: ip,
+	return &net.UDPAddr{
+		IP:   ip,
 		Port: DNSPort,
 	}
 }
@@ -40,7 +40,7 @@ func Server(ip net.IP) *net.UDPAddr {
 func Q(d *domain.Domain, t uint16, at net.IP) *Query {
 	return &Query{
 		Domain: d,
-		Type: t,
+		Type:   t,
 		Server: Server(at),
 	}
 }
@@ -53,7 +53,7 @@ func (self *Query) addrString() string {
 	if self.ServerName == nil {
 		return addrString(self.Server)
 	}
-	
+
 	p := self.Server.Port
 	if p == 0 || p == DNSPort {
 		return fmt.Sprintf("%v(%v)", self.ServerName, self.Server.IP)

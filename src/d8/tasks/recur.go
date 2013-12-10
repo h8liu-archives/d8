@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 
+	"d8/client"
 	. "d8/domain"
 	"d8/packet"
-	"d8/client"
 	"d8/packet/consts"
 	"d8/packet/rdata"
 	"d8/term"
@@ -137,10 +137,10 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 			tried[ipIndex] = true
 
 			q := &client.Query{
-				Domain: self.Domain,
-				Type: self.Type,
-				Server: client.Server(ip),
-				Zone: z.Zone(),
+				Domain:     self.Domain,
+				Type:       self.Type,
+				Server:     client.Server(ip),
+				Zone:       z.Zone(),
 				ServerName: server.Domain,
 			}
 

@@ -43,7 +43,7 @@ var (
 	errTooManyQueries = errors.New("too many queries")
 )
 
-func (self *cursor) Q(q *client.Query) (*Leaf,  error) {
+func (self *cursor) Q(q *client.Query) (*Leaf, error) {
 	if self.nquery >= MaxQuery {
 		return nil, errTooManyQueries
 	}
@@ -75,7 +75,7 @@ func (self *cursor) T(t Task) (*Branch, error) {
 
 func (self *cursor) q(q *client.Query) *Leaf {
 	qp := &client.QueryPrinter{
-		Query: q, 
+		Query:     q,
 		Printer:   self.Printer,
 		PrintFlag: self.PrintFlag,
 	}
