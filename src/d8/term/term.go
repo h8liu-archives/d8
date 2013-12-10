@@ -3,11 +3,9 @@ package term
 import (
 	"fmt"
 	"io"
-	"net"
 	"os"
 
 	"d8/client"
-	"d8/domain"
 )
 
 type Term struct {
@@ -32,29 +30,29 @@ func (self *Term) T(t Task) *Branch {
 		fmt.Fprintln(self.Log)
 	}
 
-	b, e := newCursor(self).T(t)
+	ret, e := newCursor(self).T(t)
 	if e != nil {
 		panic(e)
 	}
 
 	self.done++
 
-	return b
+	return ret
 }
 
-func (self *Term) Q(d *domain.Domain, t uint16, at net.IP) *Leaf {
+func (self *Term) Q(q *client.Query) *Leaf {
 	if self.done != 0 {
 		fmt.Fprintln(self.Log)
 	}
 
-	q, e := newCursor(self).Q(d, t, at)
+	ret, e := newCursor(self).Q(q)
 	if e != nil {
 		panic(e)
 	}
 
 	self.done++
 
-	return q
+	return ret
 }
 
 var std *Term
@@ -77,6 +75,6 @@ func T(t Task) *Branch {
 	return makeStd().T(t)
 }
 
-func Q(d *domain.Domain, t uint16, at net.IP) *Leaf {
-	return makeStd().Q(d, t, at)
+func Q(q *client.Query) *Leaf {
+	return makeStd().Q(q)
 }

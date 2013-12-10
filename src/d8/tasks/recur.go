@@ -7,6 +7,7 @@ import (
 
 	. "d8/domain"
 	"d8/packet"
+	"d8/client"
 	"d8/packet/consts"
 	"d8/packet/rdata"
 	"d8/term"
@@ -111,6 +112,8 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 	servers := z.prepareOrder()
 	tried := make(map[uint32]bool)
 
+	c.Printf("// zone: %v", z.Zone())
+
 	for _, server := range servers {
 		ips := server.IPs
 		if len(ips) == 0 {
@@ -133,9 +136,15 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 			}
 			tried[ipIndex] = true
 
-			c.Printf("// %v : %v(%v)", z.Zone(), server.Domain, ip)
+			q := &client.Query{
+				Domain: self.Domain,
+				Type: self.Type,
+				Server: client.Server(ip),
+				Zone: z.Zone(),
+				ServerName: server.Domain,
+			}
 
-			reply, e := c.Q(self.Domain, self.Type, ip)
+			reply, e := c.Q(q)
 			if e != nil {
 				return nil, e // some limit reached
 			}

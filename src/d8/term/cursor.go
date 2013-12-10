@@ -2,10 +2,8 @@ package term
 
 import (
 	"errors"
-	"net"
 
 	"d8/client"
-	"d8/domain"
 	"printer"
 )
 
@@ -13,7 +11,7 @@ type Cursor interface {
 	printer.Interface
 
 	T(t Task) (*Branch, error)
-	Q(d *domain.Domain, t uint16, at net.IP) (*Leaf, error)
+	Q(q *client.Query) (*Leaf, error)
 }
 
 type cursor struct {
@@ -45,13 +43,13 @@ var (
 	errTooManyQueries = errors.New("too many queries")
 )
 
-func (self *cursor) Q(d *domain.Domain, t uint16, at net.IP) (*Leaf, error) {
+func (self *cursor) Q(q *client.Query) (*Leaf,  error) {
 	if self.nquery >= MaxQuery {
 		return nil, errTooManyQueries
 	}
 
 	self.nquery++
-	ret := self.q(d, t, at)
+	ret := self.q(q)
 	self.TopAdd(ret)
 	return ret, nil
 }
@@ -75,16 +73,9 @@ func (self *cursor) T(t Task) (*Branch, error) {
 	return ret, nil
 }
 
-func (self *cursor) q(d *domain.Domain, t uint16, at net.IP) *Leaf {
-	q := &client.QueryPrinter{
-		Query: &client.Query{
-			Domain: d,
-			Type:   t,
-			Server: &net.UDPAddr{
-				IP:   at,
-				Port: client.DNSPort,
-			},
-		},
+func (self *cursor) q(q *client.Query) *Leaf {
+	qp := &client.QueryPrinter{
+		Query: q, 
 		Printer:   self.Printer,
 		PrintFlag: self.PrintFlag,
 	}
@@ -92,7 +83,7 @@ func (self *cursor) q(d *domain.Domain, t uint16, at net.IP) *Leaf {
 	ret := newLeaf(self.Retry)
 
 	for i := 0; i < self.Retry; i++ {
-		answer := self.client.Query(q)
+		answer := self.client.Query(qp)
 		ret.add(answer)
 		if answer.Timeout() {
 			self.Print("// retry")
