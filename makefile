@@ -1,4 +1,4 @@
-.PHONY: all fmt test testv tags doc vet
+.PHONY: all fmt test testv tags doc vet lc
 
 all: build
 
@@ -24,7 +24,10 @@ fix:
 	@ GOPATH=`pwd` go fix ./src/...
 
 tags:
-	@ gotags `find src -name *.go` > tags
+	@ gotags `find src -name "*.go"` > tags
 
 doc:
 	@ GOPATH=`pwd` godoc -http=:8000
+
+lc:
+	@ wc -l `find src -name "*.go" | grep -v regmap.go`
