@@ -14,6 +14,8 @@ type Printer struct {
 	Error  error
 }
 
+var _ Interface = new(Printer)
+
 func New(w io.Writer) *Printer {
 	return &Printer{
 		Indent: "    ",
@@ -93,10 +95,6 @@ func (self *Printer) ShiftOut() {
 		panic("shift already left most")
 	}
 	self.Shift--
-}
-
-type Printable interface {
-	PrintTo(p *Printer)
 }
 
 func String(p Printable) string {

@@ -21,7 +21,7 @@ type Client struct {
 }
 
 const (
-	DnsPort    = 53
+	DNSPort    = 53
 	ClientPort = 3553
 )
 
@@ -91,7 +91,7 @@ func (self *Client) delJob(id uint16) {
 	}
 }
 
-var ErrTimeout = errors.New("timeout")
+var errTimeout = errors.New("timeout")
 
 func (self *Client) serve() {
 	for {
@@ -126,7 +126,7 @@ func (self *Client) serve() {
 			for id, job := range self.jobs {
 				bugOn(job.id != id)
 				if job.deadline.Before(now) {
-					job.CloseErr(ErrTimeout)
+					job.CloseErr(errTimeout)
 
 					// iterating the map, so delete afterwards for safty
 					timeouts = append(timeouts, id)
@@ -146,7 +146,7 @@ func (self *Client) Send(q *Query, c chan<- *Exchange) {
 	id := self.idPool.Fetch()
 	message := newMessage(q, id)
 	if message.RemoteAddr.Port == 0 {
-		message.RemoteAddr.Port = DnsPort
+		message.RemoteAddr.Port = DNSPort
 	}
 
 	exchange := &Exchange{

@@ -85,3 +85,7 @@ func (self *Exchange) printRecv(p *printer.Printer) {
 func (self *Exchange) String() string {
 	return printer.String(self)
 }
+
+func (self *Exchange) Timeout() bool {
+	return self.Error == errTimeout
+}

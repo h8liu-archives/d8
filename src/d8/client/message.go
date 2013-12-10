@@ -23,7 +23,7 @@ func newMessage(q *Query, id uint16) *Message {
 }
 
 func addrString(a *net.UDPAddr) string {
-	if a.Port == 0 || a.Port == DnsPort {
+	if a.Port == 0 || a.Port == DNSPort {
 		return a.IP.String()
 	}
 	return a.String()
