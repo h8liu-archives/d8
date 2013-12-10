@@ -40,6 +40,9 @@ var typeStrings = map[uint16]string{
 	MX:    "mx",
 	CNAME: "cname",
 	TXT:   "txt",
+	SOA:   "soa",
+	NULL:  "null",
+	PTR:   "ptr",
 }
 
 func TypeString(t uint16) string {

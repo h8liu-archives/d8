@@ -16,6 +16,7 @@ type Recur struct {
 	Domain *Domain
 	Type   uint16
 	Start  *ZoneServers
+	HeadLess bool
 
 	Error   error
 	Return  int            // valid when Error is not null
@@ -84,8 +85,10 @@ func (self *Recur) begin() *ZoneServers {
 }
 
 func (self *Recur) Run(c term.Cursor) {
-	c.Printf("recur %v %s {", self.Domain, consts.TypeString(self.Type))
-	c.ShiftIn()
+	if !self.HeadLess {
+		c.Printf("recur %v %s {", self.Domain, consts.TypeString(self.Type))
+		c.ShiftIn()
+	}
 
 	zone := self.begin()
 	var e error
@@ -98,8 +101,10 @@ func (self *Recur) Run(c term.Cursor) {
 		}
 	}
 
-	c.ShiftOut()
-	c.Print("}")
+	if !self.HeadLess {
+		c.ShiftOut()
+		c.Print("}")
+	}
 }
 
 func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
@@ -157,7 +162,6 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 				self.Answers = ans
 				self.FoundIn = z.Zone()
 
-				c.Print("// answer found")
 				return nil, nil
 			}
 
@@ -170,12 +174,13 @@ func (self *Recur) query(c term.Cursor, z *ZoneServers) (*ZoneServers, error) {
 		}
 	}
 
-	self.Return = Lost // no valid servers
+	c.Print("// no reachable server")
+	self.Return = Lost
 	return nil, nil
 }
 
 func (self *Recur) redirects(p *packet.Packet, z *Domain, c term.Cursor) *ZoneServers {
-	redirects := p.SelectRedirects(z)
+	redirects := p.SelectRedirects(z, self.Domain)
 	if len(redirects) == 0 {
 		return nil
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	// "fmt"
 	"log"
-	"net"
+	// "net"
 
 	. "d8/domain"
 	. "d8/packet/consts"
@@ -18,7 +18,7 @@ func noError(e error) {
 }
 
 func main() {
-	term.Q(D("."), NS, net.ParseIP("198.41.0.4"))
-	term.Q(D("liulonnie.net"), NS, net.ParseIP("74.220.195.131"))
-	term.T(tasks.NewRecur(D("liulonnie.net")))
+	// term.Q(D("."), NS, net.ParseIP("198.41.0.4"))
+	// term.Q(D("liulonnie.net"), NS, net.ParseIP("74.220.195.131"))
+	term.T(tasks.NewRecurType(D("www.yahoo.com"), A))
 }

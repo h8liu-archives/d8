@@ -1,6 +1,7 @@
 package term
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -12,6 +13,7 @@ import (
 type Term struct {
 	client *client.Client
 
+	done      int
 	Log       io.Writer
 	PrintFlag int
 	Retry     int
@@ -26,18 +28,32 @@ func New(c *client.Client) *Term {
 }
 
 func (self *Term) T(t Task) *Branch {
+	if self.done != 0 {
+		fmt.Fprintln(self.Log)
+	}
+
 	b, e := newCursor(self).T(t)
 	if e != nil {
 		panic(e)
 	}
+
+	self.done++
+
 	return b
 }
 
 func (self *Term) Q(d *domain.Domain, t uint16, at net.IP) *Leaf {
+	if self.done != 0 {
+		fmt.Fprintln(self.Log)
+	}
+
 	q, e := newCursor(self).Q(d, t, at)
 	if e != nil {
 		panic(e)
 	}
+
+	self.done++
+
 	return q
 }
 

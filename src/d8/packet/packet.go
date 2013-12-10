@@ -157,8 +157,8 @@ func (self *Packet) SelectIPs(d *domain.Domain) []*RR {
 	return self.SelectWith(&IPSelector{d})
 }
 
-func (self *Packet) SelectRedirects(z *domain.Domain) []*RR {
-	return self.SelectWith(&RedirectSelector{z})
+func (self *Packet) SelectRedirects(z, d *domain.Domain) []*RR {
+	return self.SelectWith(&RedirectSelector{z, d})
 }
 
 func (self *Packet) SelectAnswers(d *domain.Domain, t uint16) []*RR {

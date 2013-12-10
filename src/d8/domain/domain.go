@@ -119,6 +119,10 @@ func (self *Domain) IsRoot() bool {
 	return self.name == ""
 }
 
+func (self *Domain) IsZoneOf(other *Domain) bool {
+	return self.Equal(other) || self.IsParentOf(other)
+}
+
 func (self *Domain) IsParentOf(other *Domain) bool {
 	return other.IsChildOf(self)
 }
