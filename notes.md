@@ -11,6 +11,7 @@
 
 # todo
 
+- recursively query ips for nameservers
 - unreachable domain will lead to panic
 - collect serving nameservers in info
 
