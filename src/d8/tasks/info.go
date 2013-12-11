@@ -25,7 +25,7 @@ func NewInfo(d *Domain) *Info {
 
 func (self *Info) Run(c Cursor) {
 	if !self.HeadLess {
-		c.Printf("records %v {", self.Domain)
+		c.Printf("info %v {", self.Domain)
 		c.ShiftIn()
 		defer ShiftOutWith(c, "}")
 	}
