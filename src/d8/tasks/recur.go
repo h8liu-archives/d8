@@ -18,11 +18,11 @@ type Recur struct {
 	StartWith *ZoneServers
 	HeadLess  bool
 
-	Error   error
-	Return  int        // valid when Error is not null
-	Packet  *pa.Packet // valid when Return is Okay
-	Answers []*pa.RR
+	Return  int          // valid when Error is not null
+	Packet  *pa.Packet   // valid when Return is Okay
 	EndWith *ZoneServers // valid when Return is Okay
+	Answers []*pa.RR     // the records in Packet that ends the query
+	Records []*pa.RR     // all the non-trivial records that helps
 }
 
 func NewRecur(d *Domain) *Recur {
@@ -88,23 +88,18 @@ func (self *Recur) Run(c Cursor) {
 	if !self.HeadLess {
 		c.Printf("recur %v %s {", self.Domain, consts.TypeString(self.Type))
 		c.ShiftIn()
+		defer ShiftOutWith(c, "}")
 	}
 
 	zone := self.begin()
 	var e error
+	self.Records = make([]*pa.RR, 0, 100)
 
 	for zone != nil {
 		zone, e = self.query(c, zone)
 		if e != nil {
-			c.Printf("error %v", e)
-			self.Error = e
 			return
 		}
-	}
-
-	if !self.HeadLess {
-		c.ShiftOut()
-		c.Print("}")
 	}
 }
 
@@ -146,7 +141,7 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 
 			reply, e := c.Q(q)
 			if e != nil {
-				return nil, e // some limit reached
+				return nil, e // some resource limit reached
 			}
 
 			attempt := reply.Last()
@@ -174,10 +169,11 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 				return nil, nil
 			}
 
-			next := ExtractServers(p, z.Zone(), self.Domain, c)
+			next, rrs := ExtractServers(p, z.Zone(), self.Domain, c)
+			self.Records = appendAll(self.Records, rrs)
 			if next == nil {
 				self.Return = NotExists
-				c.Print("// domain does not exist")
+				c.Print("// record does not exist")
 			}
 			return next, nil
 		}

@@ -81,6 +81,17 @@ func (self *RR) String() string {
 	return buf.String()
 }
 
+func (self *RR) Digest() string {
+	buf := new(bytes.Buffer)
+	fmt.Fprintf(buf, "%s %s ", self.Domain.String(), TypeString(self.Type))
+	if self.Class != IN {
+		fmt.Fprintf(buf, "%s ", ClassString(self.Class))
+	}
+	self.Rdata.PrintTo(buf)
+
+	return buf.String()
+}
+
 func ttlString(t uint32) string {
 	if t == 0 {
 		return "0"

@@ -9,3 +9,9 @@
                     or listen to TCP/HTTP input
     d8/bin/d8cesr   Crawler that works in UCSD crawler infrastructure
 
+# todo
+
+- recursively query ips for nameservers
+- unreachable domain will lead to panic
+- collect serving nameservers in info
+
