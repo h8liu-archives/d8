@@ -121,7 +121,7 @@ func (self *IPs) run(c Cursor) {
 	self.extractCnames(recur, self.Domain)
 
 	for _, cname := range self.Cnames {
-		c.Printf("// find cname: %v", cname)
+		c.Printf("// cname: %v", cname)
 	}
 
 	if len(self.Cnames) == 0 {
