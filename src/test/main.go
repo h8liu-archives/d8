@@ -26,6 +26,7 @@ func main() {
 	// term.Q(client.Qs(".", NS, "198.41.0.4"))
 	// term.Q(client.Qs("liulonnie.net", NS, "74.220.195.131"))
 	// term.T(tasks.NewRecurType(D("www.yahoo.com"), A))
-	term.T(tasks.NewIPs(D("www.yahoo.com")))
-	term.T(tasks.NewIPs(D("www.microsoft.com")))
+	term.T(tasks.NewInfo(D("www.yahoo.com")))
+	term.T(tasks.NewInfo(D("www.microsoft.com")))
+	term.T(tasks.NewInfo(D("liulonnie.ucsd.edu")))
 }

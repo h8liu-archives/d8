@@ -62,7 +62,7 @@ func (self *Query) addrString() string {
 }
 
 func (self *Query) String() string {
-	return fmt.Sprintf("%v %s @%s",
+	return fmt.Sprintf("? %v %s @%s",
 		self.Domain,
 		TypeString(self.Type),
 		self.addrString(),

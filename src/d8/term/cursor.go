@@ -10,6 +10,7 @@ import (
 type Cursor interface {
 	printer.Interface
 
+	Error() error
 	T(t Task) (*Branch, error)
 	Q(q *client.Query) (*Leaf, error)
 }
@@ -19,6 +20,7 @@ type cursor struct {
 	*Term // conveniently inherits the term options
 	*stack
 	nquery int
+	e      error
 }
 
 var _ Cursor = new(cursor)
@@ -34,8 +36,8 @@ func newCursor(t *Term) *cursor {
 }
 
 const (
-	MaxDepth = 10
-	MaxQuery = 300
+	MaxDepth = 30
+	MaxQuery = 500
 )
 
 var (
@@ -43,20 +45,34 @@ var (
 	errTooManyQueries = errors.New("too many queries")
 )
 
+func (self *cursor) Error() error { return self.e }
+
 func (self *cursor) Q(q *client.Query) (*Leaf, error) {
+	if self.e != nil {
+		return nil, self.e
+	}
+
 	if self.nquery >= MaxQuery {
-		return nil, errTooManyQueries
+		self.e = errTooManyQueries
+		self.Printf("error %v", self.e)
+		return nil, self.e
 	}
 
 	self.nquery++
 	ret := self.q(q)
 	self.TopAdd(ret)
-	return ret, nil
+	return ret, self.e
 }
 
 func (self *cursor) T(t Task) (*Branch, error) {
+	if self.e != nil {
+		return nil, self.e
+	}
+
 	if self.Len() >= MaxDepth {
-		return nil, errTooDeep
+		self.e = errTooDeep
+		self.Printf("error %v", self.e)
+		return nil, self.e
 	}
 
 	ret := newBranch(t)
@@ -70,7 +86,7 @@ func (self *cursor) T(t Task) (*Branch, error) {
 		panic("bug")
 	}
 
-	return ret, nil
+	return ret, self.e
 }
 
 func (self *cursor) q(q *client.Query) *Leaf {

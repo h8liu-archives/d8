@@ -28,6 +28,12 @@ func Unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
 			return UnpackDomain(in, n, p)
 		case AAAA:
 			return UnpackIPv6(in, n)
+		case TXT:
+			return UnpackString(in, n)
+		case MX:
+			return UnpackMailEx(in, n, p)
+		case SOA:
+			return UnpackSrcOfAuth(in, n, p)
 		}
 	}
 	return UnpackBytes(in, n)

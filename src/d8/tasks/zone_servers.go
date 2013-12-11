@@ -110,13 +110,22 @@ func (self *ZoneServers) Serves(d *Domain) bool {
 	return self.d.IsZoneOf(d)
 }
 
-func ExtractServers(p *packet.Packet, z *Domain, d *Domain, c Cursor) *ZoneServers {
+func ExtractServers(p *packet.Packet, z *Domain, d *Domain,
+	c Cursor) (*ZoneServers, []*packet.RR) {
+
 	redirects := p.SelectRedirects(z, d)
 	if len(redirects) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	next := redirects[0].Domain
+
+	var records []*packet.RR
+	if !next.IsRegistrar() {
+		records = make([]*packet.RR, 0, 100)
+		records = appendAll(records, redirects)
+	}
+
 	ret := NewZoneServers(next)
 
 	for _, rr := range redirects {
@@ -126,11 +135,16 @@ func ExtractServers(p *packet.Packet, z *Domain, d *Domain, c Cursor) *ZoneServe
 		}
 
 		ns := rdata.ToDomain(rr.Rdata)
+
 		rrs := p.SelectIPs(ns) // glued IPs
 		for _, iprr := range rrs {
 			ret.Add(ns, rdata.ToIPv4(iprr.Rdata))
 		}
+
+		if !next.IsRegistrar() {
+			records = appendAll(records, rrs)
+		}
 	}
 
-	return ret
+	return ret, records
 }

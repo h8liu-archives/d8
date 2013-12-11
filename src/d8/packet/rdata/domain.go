@@ -4,6 +4,7 @@ import (
 	"d8/domain"
 
 	"bytes"
+	"errors"
 	"fmt"
 )
 
@@ -19,10 +20,24 @@ func (self *Domain) Pack() []byte {
 	return buf.Bytes()
 }
 
-func UnpackDomain(in *bytes.Reader, n uint16, p []byte) (*Domain, error) {
-	d, e := domain.Unpack(in, p)
-	return (*Domain)(d), e
+func unpackDomain(in *bytes.Reader, n uint16, p []byte) (*domain.Domain, error) {
+	if n == 0 {
+		return nil, errors.New("zero domain len")
+	}
 
+	was := in.Len()
+	d, e := domain.Unpack(in, p)
+	now := in.Len()
+	if was-now != int(n) {
+		return nil, errors.New("invalid domain field length")
+	}
+
+	return d, e
+}
+
+func UnpackDomain(in *bytes.Reader, n uint16, p []byte) (*Domain, error) {
+	d, e := unpackDomain(in, n, p)
+	return (*Domain)(d), e
 }
 
 func ToDomain(r Rdata) *domain.Domain {
