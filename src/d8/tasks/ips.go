@@ -124,12 +124,12 @@ func (self *IPs) run(c Cursor) {
 		c.Printf("// find cname: %v", cname)
 	}
 
-	if self.findCnameResults(recur) {
-		return
-	}
-
 	if len(self.Cnames) == 0 {
 		panic("bug")
+	}
+
+	if self.findCnameResults(recur) {
+		return
 	}
 
 	p := recur.Packet
@@ -152,7 +152,6 @@ func (self *IPs) run(c Cursor) {
 			}
 		}
 
-		c.Printf("// query cname: %v", cname)
 		cnameIPs := NewIPs(cname)
 		cnameIPs.HideResult = true
 		cnameIPs.StartWith = servers
