@@ -11,6 +11,11 @@
 
 # todo
 
+- cname chain
+- ips
+- non-trivial zones and serving name servers
+- related other records of the zone
+
 - recursively query ips for nameservers
 - unreachable domain will lead to panic
 - collect serving nameservers in info

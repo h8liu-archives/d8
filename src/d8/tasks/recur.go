@@ -110,73 +110,64 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 	c.Printf("// zone: %v", z.Zone())
 
 	for _, server := range servers {
-		ips := server.IPs
-		if len(ips) == 0 {
-			// server is a useless alias
+		ip := server.IP
+		if ip == nil {
+			// TODO: no glue IPs, do some query here
+			// only add untried ones
 			continue
 		}
 
-		if server.Resolved() {
-			// TODO: no glue IPs, do some query here
-			// only add untried ones
-			if ips == nil {
-				continue
-			}
+		ipIndex := IP2Uint(ip)
+		if tried[ipIndex] {
+			panic("bug")
+		}
+		tried[ipIndex] = true
+
+		q := &client.Query{
+			Domain:     self.Domain,
+			Type:       self.Type,
+			Server:     client.Server(ip),
+			Zone:       z.Zone(),
+			ServerName: server.Domain,
 		}
 
-		for _, ip := range ips {
-			ipIndex := IP2Uint(ip)
-			if tried[ipIndex] {
-				panic("bug")
-			}
-			tried[ipIndex] = true
-
-			q := &client.Query{
-				Domain:     self.Domain,
-				Type:       self.Type,
-				Server:     client.Server(ip),
-				Zone:       z.Zone(),
-				ServerName: server.Domain,
-			}
-
-			reply, e := c.Q(q)
-			if e != nil {
-				return nil, e // some resource limit reached
-			}
-
-			attempt := reply.Last()
-
-			if attempt.Error != nil {
-				c.Printf("// unreachable: %v, last error %v",
-					server.Domain, attempt.Error)
-				continue
-			}
-
-			p := attempt.Recv.Packet
-
-			rcode := p.Rcode()
-			if !(rcode == pa.RcodeOkay || rcode == pa.RcodeNameError) {
-				c.Printf("// server error %s, rcode=%d", server.Domain, rcode)
-			}
-
-			ans := p.SelectAnswers(self.Domain, self.Type)
-			if len(ans) > 0 {
-				self.Return = Okay
-				self.Packet = p
-				self.Answers = ans
-				self.EndWith = z
-
-				return nil, nil
-			}
-
-			next, rrs := ExtractServers(p, z.Zone(), self.Domain, c)
-			self.Records = appendAll(self.Records, rrs)
-			if next == nil {
-				self.Return = NotExists
-				c.Print("// record does not exist")
-			}
-			return next, nil
+		reply, e := c.Q(q)
+		if e != nil {
+			return nil, e // some resource limit reached
 		}
+
+		attempt := reply.Last()
+
+		if attempt.Error != nil {
+			c.Printf("// unreachable: %v, last error %v",
+				server.Domain, attempt.Error)
+			continue
+		}
+
+		p := attempt.Recv.Packet
+
+		rcode := p.Rcode()
+		if !(rcode == pa.RcodeOkay || rcode == pa.RcodeNameError) {
+			c.Printf("// server error %s, rcode=%d", server.Domain, rcode)
+		}
+
+		ans := p.SelectAnswers(self.Domain, self.Type)
+		if len(ans) > 0 {
+			self.Return = Okay
+			self.Packet = p
+			self.Answers = ans
+			self.EndWith = z
+
+			return nil, nil
+		}
+
+		next, rrs := ExtractServers(p, z.Zone(), self.Domain, c)
+		self.Records = appendAll(self.Records, rrs)
+		if next == nil {
+			self.Return = NotExists
+			c.Print("// record does not exist")
+		}
+		return next, nil
 	}
 
 	c.Print("// no reachable server")
