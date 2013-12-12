@@ -18,15 +18,15 @@ type IPs struct {
 	Return  int
 	Packet  *pa.Packet
 	EndWith *ZoneServers
+	Zones   []*ZoneServers
 
-	// All the cnames that have ever tracked
-	CnameEndpoints []*Domain
 	CnameTraceBack map[string]*Domain // in and out, inherit from father IPs
-	CnameEndIPs    []*IPs
 
-	CnameRecords  []*pa.RR
-	Records       []*pa.RR
-	ServerRecords []*pa.RR
+	CnameEndpoints []*Domain       // new endpoint cnames discovered
+	CnameIPs       map[string]*IPs // sub IPs for each unresolved end point
+
+	CnameRecords []*pa.RR // new cname records
+	Records      []*pa.RR // new end point ip records
 }
 
 func NewIPs(d *Domain) *IPs {
@@ -40,16 +40,17 @@ func (self *IPs) findResults(recur *Recur) bool {
 	}
 
 	for _, rr := range recur.Answers {
-		if rr.Type == consts.A {
+		switch rr.Type {
+		case consts.A:
 			self.Records = append(self.Records, rr)
+		case consts.CNAME:
+			// okay
+		default:
+			panic("bug")
 		}
 	}
 
-	if len(self.Records) > 0 {
-		return true
-	}
-
-	return false
+	return len(self.Records) > 0
 }
 
 func (self *IPs) findCnameResults(recur *Recur) (unresolved []*Domain) {
@@ -61,9 +62,7 @@ func (self *IPs) findCnameResults(recur *Recur) (unresolved []*Domain) {
 			unresolved = append(unresolved, cname)
 			continue
 		}
-		for _, rr := range rrs {
-			self.Records = append(self.Records, rr)
-		}
+		self.Records = append(self.Records, rrs...)
 	}
 
 	return
@@ -114,10 +113,12 @@ func (self *IPs) extractCnames(recur *Recur, d *Domain, c Cursor) bool {
 }
 
 func (self *IPs) PrintResult(c Cursor) {
-	for _, r := range self.CnameRecords {
+	cnames, results := self.Results()
+
+	for _, r := range cnames {
 		c.Printf("// %v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
 	}
-	for _, r := range self.Records {
+	for _, r := range results {
 		c.Printf("// %v(%v)", r.Domain, rdata.ToIPv4(r.Rdata))
 	}
 }
@@ -139,6 +140,24 @@ func (self *IPs) Run(c Cursor) {
 	}
 }
 
+func (self *IPs) Results() (cnames, results []*pa.RR) {
+	cnames = make([]*pa.RR, 0, 20)
+	results = make([]*pa.RR, 0, 20)
+
+	return self.results(cnames, results)
+}
+
+func (self *IPs) results(cnames, results []*pa.RR) (c, r []*pa.RR) {
+	cnames = append(cnames, self.CnameRecords...)
+	results = append(results, self.Records...)
+
+	for _, ips := range self.CnameIPs {
+		cnames, results = ips.results(cnames, results)
+	}
+
+	return cnames, results
+}
+
 func (self *IPs) run(c Cursor) {
 	recur := NewRecur(self.Domain)
 	recur.HeadLess = true
@@ -153,7 +172,7 @@ func (self *IPs) run(c Cursor) {
 	self.Return = recur.Return
 	self.EndWith = recur.EndWith
 	self.Packet = recur.Packet
-	self.ServerRecords = recur.Records
+	self.Zones = recur.Zones
 
 	self.Records = make([]*pa.RR, 0, 10)
 	self.findResults(recur)
@@ -187,12 +206,11 @@ func (self *IPs) run(c Cursor) {
 	// trace down the cnames
 	p := self.Packet
 	z := self.EndWith
-	self.CnameEndIPs = make([]*IPs, 0, len(unresolved))
+	self.CnameIPs = make(map[string]*IPs)
 
 	for _, cname := range unresolved {
 		// search for redirects
-		servers, rrs := ExtractServers(p, z.Zone(), cname, c)
-		self.ServerRecords = appendAll(self.ServerRecords, rrs)
+		servers := ExtractServers(p, z.Zone(), cname, c)
 
 		// check for last result
 		if servers == nil {
@@ -211,15 +229,12 @@ func (self *IPs) run(c Cursor) {
 		cnameIPs.HideResult = true
 		cnameIPs.StartWith = servers
 		cnameIPs.CnameTraceBack = self.CnameTraceBack
-		self.CnameEndIPs = append(self.CnameEndIPs, cnameIPs)
+
+		self.CnameIPs[cname.String()] = cnameIPs
 
 		_, e := c.T(cnameIPs)
 		if e != nil {
 			return
 		}
-
-		self.Records = appendAll(self.Records, cnameIPs.Records)
-		self.CnameRecords = appendAll(self.CnameRecords, cnameIPs.CnameRecords)
-		self.ServerRecords = appendAll(self.ServerRecords, cnameIPs.ServerRecords)
 	}
 }

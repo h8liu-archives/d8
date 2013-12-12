@@ -7,7 +7,7 @@ import (
 	"time"
 
 	. "d8/domain"
-	"d8/packet"
+	pa "d8/packet"
 	"d8/packet/rdata"
 	. "d8/term"
 )
@@ -17,6 +17,7 @@ type ZoneServers struct {
 	zone       *Domain
 	resolved   map[uint32]*NameServer
 	unresolved map[string]*Domain
+	records    []*pa.RR
 }
 
 func (self *ZoneServers) Zone() *Domain { return self.zone }
@@ -26,6 +27,7 @@ func NewZoneServers(zone *Domain) *ZoneServers {
 		zone,
 		make(map[uint32]*NameServer),
 		make(map[string]*Domain),
+		nil,
 	}
 }
 
@@ -57,7 +59,6 @@ func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
 		Zone:   self.zone,
 		Domain: server,
 		IP:     ip,
-		Glued:  true,
 	}
 
 	return true
@@ -89,27 +90,38 @@ func shuffleAppend(ret, list []*NameServer) []*NameServer {
 	return ret
 }
 
-func (self *ZoneServers) prepareOrder() []*NameServer {
-	ret := make([]*NameServer, 0, len(self.resolved)+len(self.unresolved))
-
+func (self *ZoneServers) ListResolved() []*NameServer {
 	resolved := make([]*NameServer, 0, len(self.resolved))
 	for _, s := range self.resolved {
 		resolved = append(resolved, s)
 	}
 
+	return resolved
+}
+
+func (self *ZoneServers) ListUnresolved() []*NameServer {
 	unresolved := make([]*NameServer, 0, len(self.unresolved))
 	for _, d := range self.unresolved {
 		unresolved = append(unresolved, &NameServer{
 			Zone:   self.zone,
 			Domain: d,
 			IP:     nil,
-			Glued:  false,
 		})
 	}
+	return unresolved
+}
 
-	ret = shuffleAppend(ret, resolved)
-	ret = shuffleAppend(ret, unresolved)
+func (self *ZoneServers) Prepare() []*NameServer {
+	ret := make([]*NameServer, 0, len(self.resolved)+len(self.unresolved))
+	ret = shuffleAppend(ret, self.ListResolved())
+	ret = shuffleAppend(ret, self.ListUnresolved())
+	return ret
+}
 
+func (self *ZoneServers) List() []*NameServer {
+	ret := make([]*NameServer, 0, len(self.resolved)+len(self.unresolved))
+	ret = append(ret, self.ListResolved()...)
+	ret = append(ret, self.ListUnresolved()...)
 	return ret
 }
 
@@ -117,23 +129,16 @@ func (self *ZoneServers) Serves(d *Domain) bool {
 	return self.zone.IsZoneOf(d)
 }
 
-func ExtractServers(p *packet.Packet, z *Domain, d *Domain,
-	c Cursor) (*ZoneServers, []*packet.RR) {
-
+func ExtractServers(p *pa.Packet, z *Domain, d *Domain, c Cursor) *ZoneServers {
 	redirects := p.SelectRedirects(z, d)
 	if len(redirects) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	next := redirects[0].Domain
 
-	var records []*packet.RR
-	if !next.IsRegistrar() {
-		records = make([]*packet.RR, 0, 100)
-		records = appendAll(records, redirects)
-	}
-
 	ret := NewZoneServers(next)
+	ret.records = redirects
 
 	for _, rr := range redirects {
 		if !rr.Domain.Equal(next) {
@@ -144,16 +149,18 @@ func ExtractServers(p *packet.Packet, z *Domain, d *Domain,
 		ns := rdata.ToDomain(rr.Rdata)
 
 		rrs := p.SelectIPs(ns) // glued IPs
+		ret.records = append(ret.records, rrs...)
+
 		ips := make([]net.IP, 0, len(rrs))
 		for _, rr := range rrs {
 			ips = append(ips, rdata.ToIPv4(rr.Rdata))
 		}
 		ret.Add(ns, ips...)
-
-		if !next.IsRegistrar() {
-			records = appendAll(records, rrs)
-		}
 	}
 
-	return ret, records
+	return ret
+}
+
+func (self *ZoneServers) Records() []*pa.RR {
+	return self.records
 }

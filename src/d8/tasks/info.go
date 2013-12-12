@@ -14,9 +14,17 @@ type Info struct {
 	Shallow   bool
 
 	EndWith *ZoneServers
-	Records []*pa.RR
 
-	Followed map[string]*ZoneServers
+	Cnames  []*pa.RR
+	Results []*pa.RR
+
+	Records    []*pa.RR
+	RecordsMap map[string]*pa.RR
+
+	NameServers    []*NameServer
+	NameServersMap map[string]*NameServer
+
+	Zones map[string]*ZoneServers
 }
 
 func NewInfo(d *Domain) *Info {
@@ -30,117 +38,122 @@ func (self *Info) Run(c Cursor) {
 		defer ShiftOutWith(c, "}")
 	}
 
-	self.run(c)
+	ips := self.run(c)
 	if c.Error() != nil {
 		return
 	}
 
-	self.dedup()
+	ips.PrintResult(c)
 
-	c.Print()
-	for _, rr := range self.Records {
-		c.Printf("// %s", rr.Digest())
-	}
-}
-
-func (self *Info) dedup() {
-	m := make(map[string]bool)
-	records := make([]*pa.RR, 0, len(self.Records))
-
-	for _, rr := range self.Records {
-		s := rr.Digest()
-		if m[s] {
-			continue
+	if len(self.NameServers) > 0 {
+		c.Print()
+		for _, ns := range self.NameServers {
+			c.Printf("// %v", ns)
 		}
-		m[s] = true
-		records = append(records, rr)
 	}
 
-	self.Records = records
-}
-
-func appendAll(list []*pa.RR, rrs []*pa.RR) []*pa.RR {
-	for _, rr := range rrs {
-		list = append(list, rr)
+	if len(self.Records) > 0 {
+		c.Print()
+		for _, rr := range self.Records {
+			c.Printf("// %s", rr.Digest())
+		}
 	}
-	return list
 }
 
 func (self *Info) appendAll(rrs []*pa.RR) {
-	self.Records = appendAll(self.Records, rrs)
+	for _, rr := range rrs {
+		k := rr.Digest()
+		if self.RecordsMap[k] != nil {
+			continue
+		}
+		self.RecordsMap[k] = rr
+		self.Records = append(self.Records, rr)
+	}
 }
 
-func (self *Info) run(c Cursor) {
+func (self *Info) run(c Cursor) *IPs {
 	ips := NewIPs(self.Domain)
 	ips.StartWith = self.StartWith
 	ips.HideResult = true
 
 	_, e := c.T(ips)
 	if e != nil {
-		return
+		return nil
 	}
 
 	self.EndWith = ips.EndWith
+
+	self.Cnames, self.Results = ips.Results()
+
+	self.RecordsMap = make(map[string]*pa.RR)
 	self.Records = make([]*pa.RR, 0, 100)
+	self.Zones = make(map[string]*ZoneServers)
+	self.NameServers = make([]*NameServer, 0, 100)
+	self.NameServersMap = make(map[string]*NameServer)
 
-	self.appendAll(ips.CnameRecords)
-	self.appendAll(ips.Records)
-	self.appendAll(ips.ServerRecords)
+	self.appendAll(self.Cnames)
+	self.appendAll(self.Results)
 
-	self.Followed = make(map[string]*ZoneServers)
-	self.followUp(ips, c)
+	self.collectInfo(ips)
 
-	ips.PrintResult(c)
-}
-
-var otherTypes = []uint16{NS, MX, SOA, TXT}
-
-func (self *Info) check(z *ZoneServers) bool {
-	zoneStr := z.Zone().String()
-	if self.Followed[zoneStr] != nil {
-		return true
+	for _, z := range self.Zones {
+		self.queryZone(z, c)
 	}
-	self.Followed[zoneStr] = z
-	return false
+
+	return ips
 }
 
-func (self *Info) _followUp(ips *IPs, c Cursor) error {
-	if ips.Return == Okay || ips.Return == NotExists {
-		z := ips.EndWith
-		if self.check(z) {
-			return nil
+var infoTypes = []uint16{NS, MX, SOA, TXT}
+
+func (self *Info) collectInfo(ips *IPs) {
+	self._collectInfo(ips)
+
+	if self.Shallow {
+		return
+	}
+
+	for _, ips := range ips.CnameIPs {
+		self._collectInfo(ips)
+	}
+}
+
+func (self *Info) _collectInfo(ips *IPs) {
+	for _, z := range ips.Zones {
+		if z.Zone().IsRegistrar() {
+			continue
 		}
 
-		for _, t := range otherTypes {
-			recur := NewRecurType(z.Zone(), t)
-			recur.StartWith = z
-			_, e := c.T(recur)
-			if e != nil {
-				return e
+		for _, s := range z.List() {
+			if s.IP == nil {
+				continue
 			}
+			k := s.Key()
+			if self.NameServersMap[k] != nil {
+				continue
+			}
+			self.NameServersMap[k] = s
+			self.NameServers = append(self.NameServers, s)
+		}
 
-			self.appendAll(recur.Answers)
-			self.appendAll(recur.Records)
+		self.appendAll(z.Records())
+
+		zoneStr := z.Zone().String()
+		if self.Zones[zoneStr] == nil {
+			self.Zones[zoneStr] = z
 		}
 	}
-
-	return nil
 }
 
-func (self *Info) followUp(ips *IPs, c Cursor) error {
-	e := self._followUp(ips, c)
-	if e != nil {
-		return e
-	}
-
-	if !self.Shallow {
-		for _, cnameIPs := range ips.CnameEndIPs {
-			e = self.followUp(cnameIPs, c)
-			if e != nil {
-				return e
-			}
+func (self *Info) queryZone(z *ZoneServers, c Cursor) error {
+	for _, t := range infoTypes {
+		recur := NewRecurType(z.Zone(), t)
+		recur.StartWith = z
+		_, e := c.T(recur)
+		if e != nil {
+			return e
 		}
-	}
 
+		self.appendAll(recur.Answers)
+	}
 	return nil
 }

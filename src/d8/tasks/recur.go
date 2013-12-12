@@ -22,7 +22,7 @@ type Recur struct {
 	Packet  *pa.Packet   // valid when Return is Okay
 	EndWith *ZoneServers // valid when Return is Okay
 	Answers []*pa.RR     // the records in Packet that ends the query
-	Records []*pa.RR     // all the non-trivial records that helps
+	Zones   []*ZoneServers
 }
 
 func NewRecur(d *Domain) *Recur {
@@ -93,7 +93,7 @@ func (self *Recur) Run(c Cursor) {
 
 	zone := self.begin()
 	var e error
-	self.Records = make([]*pa.RR, 0, 100)
+	self.Zones = make([]*ZoneServers, 0, 100)
 
 	for zone != nil {
 		zone, e = self.query(c, zone)
@@ -104,11 +104,10 @@ func (self *Recur) Run(c Cursor) {
 }
 
 func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
-	servers := z.prepareOrder()
-	tried := make(map[uint32]bool)
+	self.Zones = append(self.Zones, z)
+	servers := z.Prepare()
 
 	c.Printf("// zone: %v", z.Zone())
-
 	for _, server := range servers {
 		ip := server.IP
 		if ip == nil {
@@ -116,12 +115,6 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 			// only add untried ones
 			continue
 		}
-
-		ipIndex := IP2Uint(ip)
-		if tried[ipIndex] {
-			panic("bug")
-		}
-		tried[ipIndex] = true
 
 		q := &client.Query{
 			Domain:     self.Domain,
@@ -161,8 +154,8 @@ func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
 			return nil, nil
 		}
 
-		next, rrs := ExtractServers(p, z.Zone(), self.Domain, c)
-		self.Records = appendAll(self.Records, rrs)
+		next := ExtractServers(p, z.Zone(), self.Domain, c)
+
 		if next == nil {
 			self.Return = NotExists
 			c.Print("// record does not exist")
