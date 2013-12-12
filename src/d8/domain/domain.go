@@ -20,7 +20,17 @@ func (self *Domain) Equal(other *Domain) bool {
 	if other == nil {
 		return false
 	}
-	return self.name == other.name
+
+	if len(self.labels) != len(other.labels) {
+		return false
+	}
+
+	for i, lab := range self.labels {
+		if other.labels[i] != lab {
+			return false
+		}
+	}
+	return true
 }
 
 func (self *Domain) String() string {
@@ -60,7 +70,7 @@ func checkLabel(label string) error {
 			continue
 		}
 
-		return errors.New("invalid char")
+		return fmt.Errorf("invalid char: %c", c)
 	}
 
 	return nil
@@ -116,7 +126,7 @@ func D(s string) *Domain {
 }
 
 func (self *Domain) IsRoot() bool {
-	return self.name == ""
+	return len(self.labels) == 0
 }
 
 func (self *Domain) IsZoneOf(other *Domain) bool {
@@ -128,10 +138,21 @@ func (self *Domain) IsParentOf(other *Domain) bool {
 }
 
 func (self *Domain) IsChildOf(other *Domain) bool {
-	if self.Equal(other) {
+	n := len(self.labels)
+	nother := len(other.labels)
+	if nother >= n {
 		return false
 	}
-	return strings.HasSuffix(self.name, other.name)
+
+	d := n - nother
+
+	for i, lab := range other.labels {
+		if self.labels[i+d] != lab {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (self *Domain) Parent() *Domain {
@@ -184,8 +205,8 @@ func (self *Domain) IsRegistrar() bool {
 	return reged == nil
 }
 
-func (self *Domain) Pack(buf *bytes.Buffer) {
-	for _, lab := range self.labels {
+func PackLabels(buf *bytes.Buffer, labels []string) {
+	for _, lab := range labels {
 		_lab := []byte(lab)
 		buf.WriteByte(byte(len(_lab)))
 		buf.Write(_lab)
@@ -193,12 +214,15 @@ func (self *Domain) Pack(buf *bytes.Buffer) {
 	buf.WriteByte(0)
 }
 
+func (self *Domain) Pack(buf *bytes.Buffer) {
+	PackLabels(buf, self.labels)
+}
+
 func isRedirect(b byte) bool { return b&0xc0 == 0xc0 }
 func offset(n, b byte) int   { return (int(n&0x3f) << 8) + int(b) }
 
-func Unpack(buf *bytes.Reader, p []byte) (*Domain, error) {
+func UnpackLabels(buf *bytes.Reader, p []byte) ([]string, error) {
 	labels := make([]string, 0, 5)
-	_len := 0
 
 	for {
 		n, e := buf.ReadByte() // label length
@@ -223,22 +247,30 @@ func Unpack(buf *bytes.Reader, p []byte) (*Domain, error) {
 		if n > 63 {
 			return nil, errors.New("label too long")
 		}
-		_len += int(n) + 1
-		if _len > 255 {
-			return nil, errors.New("domain too long")
-		}
 
 		labelBuf := make([]byte, n)
 		if _, e := buf.Read(labelBuf); e != nil {
 			return nil, e
 		}
 
-		label := string(labelBuf)
+		label := strings.ToLower(string(labelBuf))
 
-		if e := checkLabel(label); e != nil {
+		labels = append(labels, label)
+	}
+
+	return labels, nil
+}
+
+func Unpack(buf *bytes.Reader, p []byte) (*Domain, error) {
+	labels, e := UnpackLabels(buf, p)
+	if e != nil {
+		return nil, e
+	}
+
+	for _, lab := range labels {
+		if e := checkLabel(lab); e != nil {
 			return nil, e
 		}
-		labels = append(labels, label)
 	}
 
 	name := strings.Join(labels, ".")

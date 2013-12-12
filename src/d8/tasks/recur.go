@@ -23,6 +23,8 @@ type Recur struct {
 	EndWith *ZoneServers // valid when Return is Okay
 	Answers []*pa.RR     // the records in Packet that ends the query
 	Zones   []*ZoneServers
+
+	zone *ZoneServers
 }
 
 func NewRecur(d *Domain) *Recur {
@@ -91,79 +93,113 @@ func (self *Recur) Run(c Cursor) {
 		defer ShiftOutWith(c, "}")
 	}
 
-	zone := self.begin()
+	self.zone = self.begin()
 	var e error
 	self.Zones = make([]*ZoneServers, 0, 100)
 
-	for zone != nil {
-		zone, e = self.query(c, zone)
+	for self.zone != nil {
+		e = self.query(c)
 		if e != nil {
 			return
 		}
 	}
 }
 
-func (self *Recur) query(c Cursor, z *ZoneServers) (*ZoneServers, error) {
-	self.Zones = append(self.Zones, z)
-	servers := z.Prepare()
+func (self *Recur) q(c Cursor, ip net.IP, name *Domain) error {
+	q := &client.Query{
+		Domain:     self.Domain,
+		Type:       self.Type,
+		Server:     client.Server(ip),
+		Zone:       self.zone.Zone(),
+		ServerName: name,
+	}
 
-	c.Printf("// zone: %v", z.Zone())
-	for _, server := range servers {
-		ip := server.IP
-		if ip == nil {
-			// TODO: no glue IPs, do some query here
-			// only add untried ones
-			continue
+	reply, e := c.Q(q)
+	if e != nil {
+		return e // some resource limit reached
+	}
+
+	attempt := reply.Last()
+
+	if attempt.Error != nil {
+		c.Printf("// unreachable: %v, last error %v",
+			name, attempt.Error)
+		return nil
+	}
+
+	p := attempt.Recv.Packet
+
+	rcode := p.Rcode()
+	if !(rcode == pa.RcodeOkay || rcode == pa.RcodeNameError) {
+		c.Printf("// server error %s, rcode=%d", name, rcode)
+	}
+
+	ans := p.SelectAnswers(self.Domain, self.Type)
+	if len(ans) > 0 {
+		self.Return = Okay
+		self.Packet = p
+		self.Answers = ans
+		self.EndWith = self.zone
+		self.zone = nil
+
+		return nil
+	}
+
+	next := ExtractServers(p, self.zone.Zone(), self.Domain, c)
+
+	if next == nil {
+		self.Return = NotExists
+		c.Print("// record does not exist")
+	}
+
+	self.zone = next
+	return nil
+}
+
+func (self *Recur) query(c Cursor) error {
+	self.Zones = append(self.Zones, self.zone)
+	resolved, unresolved := self.zone.Prepare()
+
+	c.Printf("// zone: %v", self.zone.Zone())
+	zone := self.zone
+
+	for _, server := range resolved {
+		if e := self.q(c, server.IP, server.Domain); e != nil {
+			return e
+		}
+		if self.zone != zone {
+			return nil
+		}
+	}
+
+	for _, server := range unresolved {
+		if server.IP != nil {
+			panic("bug")
 		}
 
-		q := &client.Query{
-			Domain:     self.Domain,
-			Type:       self.Type,
-			Server:     client.Server(ip),
-			Zone:       z.Zone(),
-			ServerName: server.Domain,
+		t := NewIPs(server.Domain)
+		if _, e := c.T(t); e != nil {
+			return e
 		}
 
-		reply, e := c.Q(q)
-		if e != nil {
-			return nil, e // some resource limit reached
+		cnames, res, ips := t.ResultAndIPs()
+		self.zone.AddRecords(cnames)
+		self.zone.AddRecords(res)
+		self.zone.Add(server.Domain, ips...)
+
+		for _, ip := range ips {
+			if e := self.q(c, ip, server.Domain); e != nil {
+				return e
+			}
+			if self.zone != zone {
+				return nil
+			}
 		}
-
-		attempt := reply.Last()
-
-		if attempt.Error != nil {
-			c.Printf("// unreachable: %v, last error %v",
-				server.Domain, attempt.Error)
-			continue
-		}
-
-		p := attempt.Recv.Packet
-
-		rcode := p.Rcode()
-		if !(rcode == pa.RcodeOkay || rcode == pa.RcodeNameError) {
-			c.Printf("// server error %s, rcode=%d", server.Domain, rcode)
-		}
-
-		ans := p.SelectAnswers(self.Domain, self.Type)
-		if len(ans) > 0 {
-			self.Return = Okay
-			self.Packet = p
-			self.Answers = ans
-			self.EndWith = z
-
-			return nil, nil
-		}
-
-		next := ExtractServers(p, z.Zone(), self.Domain, c)
-
-		if next == nil {
-			self.Return = NotExists
-			c.Print("// record does not exist")
-		}
-		return next, nil
 	}
 
 	c.Print("// no reachable server")
 	self.Return = Lost
-	return nil, nil
+	self.EndWith = self.zone
+	self.zone = nil
+	return nil
 }

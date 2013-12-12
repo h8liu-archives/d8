@@ -1,6 +1,8 @@
 package tasks
 
 import (
+	"net"
+
 	. "d8/domain"
 	pa "d8/packet"
 	"d8/packet/consts"
@@ -34,9 +36,9 @@ func NewIPs(d *Domain) *IPs {
 }
 
 // Look for Query error or A records in Answer
-func (self *IPs) findResults(recur *Recur) bool {
+func (self *IPs) collectResults(recur *Recur) {
 	if recur.Return != Okay {
-		return true
+		panic("bug")
 	}
 
 	for _, rr := range recur.Answers {
@@ -49,8 +51,6 @@ func (self *IPs) findResults(recur *Recur) bool {
 			panic("bug")
 		}
 	}
-
-	return len(self.Records) > 0
 }
 
 func (self *IPs) findCnameResults(recur *Recur) (unresolved []*Domain) {
@@ -118,6 +118,11 @@ func (self *IPs) PrintResult(c Cursor) {
 	for _, r := range cnames {
 		c.Printf("// %v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
 	}
+
+	if len(results) == 0 {
+		c.Printf("// (%v is unresolvable)", self.Domain)
+	}
+
 	for _, r := range results {
 		c.Printf("// %v(%v)", r.Domain, rdata.ToIPv4(r.Rdata))
 	}
@@ -147,6 +152,33 @@ func (self *IPs) Results() (cnames, results []*pa.RR) {
 	return self.results(cnames, results)
 }
 
+func (self *IPs) ResultAndIPs() (cnames, results []*pa.RR, ips []net.IP) {
+	cnames, results = self.Results()
+	if len(results) == 0 {
+		return
+	}
+
+	hits := make(map[uint32]bool)
+	ips = make([]net.IP, 0, len(results))
+
+	for _, rr := range results {
+		ip := rdata.ToIPv4(rr.Rdata)
+		index := IP2Uint(ip)
+		if hits[index] {
+			continue
+		}
+		hits[index] = true
+		ips = append(ips, ip)
+	}
+
+	return
+}
+
+func (self *IPs) IPs() []net.IP {
+	_, _, ret := self.ResultAndIPs()
+	return ret
+}
+
 func (self *IPs) results(cnames, results []*pa.RR) (c, r []*pa.RR) {
 	cnames = append(cnames, self.CnameRecords...)
 	results = append(results, self.Records...)
@@ -174,8 +206,12 @@ func (self *IPs) run(c Cursor) {
 	self.Packet = recur.Packet
 	self.Zones = recur.Zones
 
+	if self.Return != Okay {
+		return
+	}
+
 	self.Records = make([]*pa.RR, 0, 10)
-	self.findResults(recur)
+	self.collectResults(recur)
 
 	// even if we find results, we still track cnames if any
 	self.CnameEndpoints = make([]*Domain, 0, 10)

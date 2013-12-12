@@ -6,17 +6,20 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type SrcOfAuth struct {
-	Mname                                   *domain.Domain
-	Rname                                   *domain.Domain
-	Serial, Refresh, Retry, Expire, Minimum uint32
+	Mname                  []string
+	Rname                  []string
+	Serial, Refresh        uint32
+	Retry, Expire, Minimum uint32
 }
 
 func (self *SrcOfAuth) PrintTo(out *bytes.Buffer) {
 	fmt.Fprintf(out, "%v/%v serial=%d refresh=%d retry=%d exp=%d min=%d",
-		self.Mname, self.Rname,
+		strings.Join(self.Mname, "."),
+		strings.Join(self.Rname, "."),
 		self.Serial, self.Refresh, self.Retry, self.Expire, self.Minimum)
 }
 
@@ -26,17 +29,19 @@ func UnpackSrcOfAuth(in *bytes.Reader, n uint16, p []byte) (*SrcOfAuth, error) {
 	}
 
 	ret := new(SrcOfAuth)
-	var e error
 	was := in.Len()
-	ret.Mname, e = domain.Unpack(in, p)
+	labels, e := domain.UnpackLabels(in, p)
 	if e != nil {
 		return nil, e
 	}
+	ret.Mname = labels
 
-	ret.Rname, e = domain.Unpack(in, p)
+	labels, e = domain.UnpackLabels(in, p)
 	if e != nil {
 		return nil, e
 	}
+	ret.Rname = labels
+
 	now := in.Len()
 	if was-now+20 != int(n) {
 		return nil, errors.New("invalid soa field length")
@@ -58,8 +63,8 @@ func UnpackSrcOfAuth(in *bytes.Reader, n uint16, p []byte) (*SrcOfAuth, error) {
 
 func (self *SrcOfAuth) Pack() []byte {
 	buf := new(bytes.Buffer)
-	self.Mname.Pack(buf)
-	self.Rname.Pack(buf)
+	domain.PackLabels(buf, self.Mname)
+	domain.PackLabels(buf, self.Rname)
 
 	b := make([]byte, 20)
 	enc.PutUint32(b[0:4], self.Serial)

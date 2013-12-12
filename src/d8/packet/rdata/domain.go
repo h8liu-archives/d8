@@ -20,7 +20,8 @@ func (self *Domain) Pack() []byte {
 	return buf.Bytes()
 }
 
-func unpackDomain(in *bytes.Reader, n uint16, p []byte) (*domain.Domain, error) {
+func unpackDomain(in *bytes.Reader, n uint16,
+	p []byte) (*domain.Domain, error) {
 	if n == 0 {
 		return nil, errors.New("zero domain len")
 	}
@@ -29,7 +30,8 @@ func unpackDomain(in *bytes.Reader, n uint16, p []byte) (*domain.Domain, error) 
 	d, e := domain.Unpack(in, p)
 	now := in.Len()
 	if was-now != int(n) {
-		return nil, errors.New("invalid domain field length")
+		return nil, fmt.Errorf("domain length expect %d, actual %d",
+			n, was-now)
 	}
 
 	return d, e

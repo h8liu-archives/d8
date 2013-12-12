@@ -13,13 +13,8 @@ type Rdata interface {
 	Pack() []byte
 }
 
-func Unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
-	buf := make([]byte, 2)
-	if _, e := in.Read(buf); e != nil {
-		return nil, e
-	}
-	n := enc.Uint16(buf)
-
+func unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
+	n := uint16(in.Len())
 	if c == IN {
 		switch t {
 		case A:
@@ -37,6 +32,23 @@ func Unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
 		}
 	}
 	return UnpackBytes(in, n)
+}
+
+func Unpack(t, c uint16, in *bytes.Reader, p []byte) (Rdata, error) {
+	buf := make([]byte, 2)
+	if _, e := in.Read(buf); e != nil {
+		return nil, e
+	}
+	n := enc.Uint16(buf)
+
+	buf = make([]byte, n)
+	if _, e := in.Read(buf); e != nil {
+		return nil, e
+	}
+
+	in = bytes.NewReader(buf)
+	ret, e := unpack(t, c, bytes.NewReader(buf), p)
+	return ret, e
 }
 
 func Pack(out *bytes.Buffer, rdata Rdata) {

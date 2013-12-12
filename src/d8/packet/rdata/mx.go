@@ -4,16 +4,35 @@ import (
 	"d8/domain"
 
 	"bytes"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 type MailEx struct {
 	Priority uint16
-	Domain   *domain.Domain
+	Domain   []string
 }
 
 func (self *MailEx) PrintTo(out *bytes.Buffer) {
-	fmt.Fprintf(out, "%v/%d", self.Domain, self.Priority)
+	fmt.Fprintf(out, "%s/%d",
+		strings.Join(self.Domain, "."), self.Priority)
+}
+
+func unpackLabels(in *bytes.Reader, n uint16, p []byte) ([]string, error) {
+	if n == 0 {
+		return nil, errors.New("zero labels len")
+	}
+
+	was := in.Len()
+	d, e := domain.UnpackLabels(in, p)
+	now := in.Len()
+	if was-now != int(n) {
+		return nil, fmt.Errorf("domain length expect %d, actual %d",
+			n, was-now)
+	}
+
+	return d, e
 }
 
 func UnpackMailEx(in *bytes.Reader, n uint16, p []byte) (*MailEx, error) {
@@ -29,10 +48,11 @@ func UnpackMailEx(in *bytes.Reader, n uint16, p []byte) (*MailEx, error) {
 
 	ret := new(MailEx)
 	ret.Priority = enc.Uint16(buf)
-	ret.Domain, e = unpackDomain(in, n-2, p)
+	labels, e := unpackLabels(in, n-2, p)
 	if e != nil {
 		return nil, e
 	}
+	ret.Domain = labels
 
 	return ret, nil
 }
@@ -42,6 +62,6 @@ func (self *MailEx) Pack() []byte {
 	b := make([]byte, 2)
 	enc.PutUint16(b, self.Priority)
 	buf.Write(b)
-	self.Domain.Pack(buf)
+	domain.PackLabels(buf, self.Domain)
 	return buf.Bytes()
 }

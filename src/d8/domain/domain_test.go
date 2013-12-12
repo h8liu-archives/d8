@@ -61,12 +61,12 @@ func TestDomainParse(t *testing.T) {
 func TestDomainReg(t *testing.T) {
 	r := func(input, reged, regtr *Domain) {
 		_reged, _regtr := input.RegParts()
-		if !reged.Equals(_reged) {
+		if !reged.Equal(_reged) {
 			t.Errorf("reged of %s: expect %s, got %s",
 				input, reged, _reged)
 		}
 
-		if !regtr.Equals(_regtr) {
+		if !regtr.Equal(_regtr) {
 			t.Errorf("regtr of %s: expect %s, got %s",
 				input, regtr, _regtr)
 		}
@@ -78,4 +78,13 @@ func TestDomainReg(t *testing.T) {
 	r(D("www.yahoo.edu.ru"), D("yahoo.edu.ru"), D("edu.ru"))
 	r(D("www.yahoo.edu.ru"), D("yahoo.edu.ru"), D("edu.ru"))
 	r(D("co"), nil, D("co"))
+
+	o := func(c, p *Domain) {
+		if !c.IsChildOf(p) || !p.IsParentOf(c) {
+			t.Errorf("failed on relative: %v %v", p, c)
+		}
+	}
+	o(D("www.google.com"), D("google.com"))
+	o(D("www.google.com"), D("com"))
+	o(D("www.google.com"), D("."))
 }

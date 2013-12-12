@@ -1,7 +1,9 @@
 package client
 
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -73,7 +75,8 @@ func (self *Client) recv() {
 
 		p, e := packet.Unpack(buf[:n])
 		if e != nil {
-			log.Print("unpack:", e)
+			log.Print("unpack: ", e)
+			fmt.Println(hex.Dump(buf[:n]))
 			continue
 		}
 
@@ -118,11 +121,11 @@ func (self *Client) serve() {
 		case m := <-self.recvs:
 			id := m.Packet.Id
 			job := self.jobs[id]
-			bugOn(job.id != id)
 			if job == nil {
 				// this might happen with the timeout window is set too small
 				log.Printf("recved zombie msg with id %d", id)
 			} else {
+				bugOn(job.id != id)
 				job.CloseRecv(m)
 				self.delJob(id)
 			}

@@ -2,8 +2,11 @@ package main
 
 import (
 	// "fmt"
+	"bufio"
 	"log"
 	"net"
+	"os"
+	"strings"
 
 	// "d8/client"
 	. "d8/domain"
@@ -23,10 +26,13 @@ func ip(s string) net.IP {
 }
 
 func main() {
-	// term.Q(client.Qs(".", NS, "198.41.0.4"))
-	// term.Q(client.Qs("liulonnie.net", NS, "74.220.195.131"))
-	// term.T(tasks.NewRecurType(D("www.yahoo.com"), A))
-	term.T(tasks.NewInfo(D("www.yahoo.com")))
-	term.T(tasks.NewInfo(D("www.microsoft.com")))
-	term.T(tasks.NewInfo(D("liulonnie.ucsd.edu")))
+	fin, e := os.Open("list")
+	noError(e)
+
+	s := bufio.NewScanner(fin)
+
+	for s.Scan() {
+		d := D(strings.TrimSpace(s.Text()))
+		term.T(tasks.NewInfo(d))
+	}
 }

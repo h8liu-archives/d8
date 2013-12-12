@@ -55,6 +55,11 @@ func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
 		return false
 	}
 
+	s := server.String()
+	if _, found := self.unresolved[s]; found {
+		delete(self.unresolved, s)
+	}
+
 	self.resolved[index] = &NameServer{
 		Zone:   self.zone,
 		Domain: server,
@@ -111,11 +116,13 @@ func (self *ZoneServers) ListUnresolved() []*NameServer {
 	return unresolved
 }
 
-func (self *ZoneServers) Prepare() []*NameServer {
-	ret := make([]*NameServer, 0, len(self.resolved)+len(self.unresolved))
-	ret = shuffleAppend(ret, self.ListResolved())
-	ret = shuffleAppend(ret, self.ListUnresolved())
-	return ret
+func (self *ZoneServers) Prepare() (res, unres []*NameServer) {
+	res = make([]*NameServer, 0, len(self.resolved))
+	res = shuffleAppend(res, self.ListResolved())
+
+	unres = make([]*NameServer, 0, len(self.unresolved))
+	unres = shuffleAppend(unres, self.ListUnresolved())
+	return res, unres
 }
 
 func (self *ZoneServers) List() []*NameServer {
@@ -129,7 +136,8 @@ func (self *ZoneServers) Serves(d *Domain) bool {
 	return self.zone.IsZoneOf(d)
 }
 
-func ExtractServers(p *pa.Packet, z *Domain, d *Domain, c Cursor) *ZoneServers {
+func ExtractServers(p *pa.Packet, z *Domain, d *Domain,
+	c Cursor) *ZoneServers {
 	redirects := p.SelectRedirects(z, d)
 	if len(redirects) == 0 {
 		return nil
@@ -163,4 +171,8 @@ func ExtractServers(p *pa.Packet, z *Domain, d *Domain, c Cursor) *ZoneServers {
 
 func (self *ZoneServers) Records() []*pa.RR {
 	return self.records
+}
+
+func (self *ZoneServers) AddRecords(list []*pa.RR) {
+	self.records = append(self.records, list...)
 }
