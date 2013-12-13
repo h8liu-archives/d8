@@ -11,7 +11,7 @@
 
 # todo
 
-- handling message unpack error properly (especially when id is ...)
-- mark offline zone servers (mark last unreachable time)
-- concurrent crawling
-- save in sqlite3
+- name server cache
+- better handling on message unpack error (especially when id is ...)
+- mark offline zone servers (save last unreachable time)
+- save in sqlite3 and other output devices
