@@ -78,6 +78,11 @@ func TestDomainReg(t *testing.T) {
 	r(D("www.yahoo.edu.ru"), D("yahoo.edu.ru"), D("edu.ru"))
 	r(D("www.yahoo.edu.ru"), D("yahoo.edu.ru"), D("edu.ru"))
 	r(D("co"), nil, D("co"))
+	r(D("au"), nil, D("au"))
+	r(D("bd"), nil, D("bd"))
+	r(D("cn"), nil, D("cn"))
+	r(D("uba.ar"), nil, D("uba.ar"))
+	r(D("t.uba.ar"), D("t.uba.ar"), D("uba.ar"))
 
 	o := func(c, p *Domain) {
 		if !c.IsChildOf(p) || !p.IsParentOf(c) {

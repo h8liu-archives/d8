@@ -60,6 +60,12 @@ func (self *Packet) unpack() error {
 		return e
 	}
 
+	if self.Flag&FlagTC != 0 {
+		self.Authority = self.Authority[0:0]
+		self.Addition = self.Addition[0:0]
+		return nil
+	}
+
 	if e := self.Authority.unpack(in, self.Bytes); e != nil {
 		return e
 	}

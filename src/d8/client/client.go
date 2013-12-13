@@ -57,7 +57,7 @@ func New() (*Client, error) {
 	return NewPort(0)
 }
 
-const packetMaxSize = 512
+const packetMaxSize = 1600
 
 func newRecvBuf() []byte {
 	return make([]byte, packetMaxSize)
@@ -77,6 +77,7 @@ func (self *Client) recv() {
 		if e != nil {
 			log.Print("unpack: ", e)
 			fmt.Println(hex.Dump(buf[:n]))
+
 			continue
 		}
 

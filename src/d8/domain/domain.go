@@ -175,6 +175,10 @@ func (self *Domain) RegParts() (registered *Domain, registrar *Domain) {
 	parent := self.Parent()
 	for {
 		if parent == nil {
+			// cur is root
+			return last, cur
+		}
+		if superRegs[cur.name] {
 			return last, cur
 		}
 		if superRegs[parent.name] && nonRegs[cur.name] {
