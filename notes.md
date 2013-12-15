@@ -15,3 +15,9 @@
 - better handling on message unpack error (especially when id is ...)
 - mark offline zone servers (save last unreachable time)
 - save in sqlite3 and other output devices
+
+# notes
+
+only recursive task cares about the cache, other ones will just call
+recursive
+
