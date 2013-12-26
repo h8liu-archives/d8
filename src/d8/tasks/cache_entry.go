@@ -2,7 +2,6 @@ package tasks
 
 import (
 	. "d8/domain"
-	"sync"
 	"time"
 )
 
@@ -16,8 +15,6 @@ type CacheEntry struct {
 	resolved   map[string]*Domain
 	unresolved map[string]*Domain
 	expires    time.Time
-
-	lock *sync.RWMutex
 }
 
 func (self *CacheEntry) Expired() bool {
@@ -39,24 +36,16 @@ func NewEmptyCacheEntry(zone *Domain) *CacheEntry {
 		make(map[string]*Domain),
 		make(map[string]*Domain),
 		time.Now().Add(cacheLifeSpan),
-		new(sync.RWMutex),
 	}
 }
 
 func NewCacheEntry(zs *ZoneServers) *CacheEntry {
 	ret := NewEmptyCacheEntry(zs.zone)
-	ret.add(zs)
+	ret.Add(zs)
 	return ret
 }
 
 func (self *CacheEntry) Add(zs *ZoneServers) {
-	self.lock.Lock()
-	defer self.lock.Unlock()
-
-	self.add(zs)
-}
-
-func (self *CacheEntry) add(zs *ZoneServers) {
 	if !zs.zone.Equal(self.zone) {
 		panic("zone mismatch")
 	}
@@ -74,13 +63,6 @@ func (self *CacheEntry) add(zs *ZoneServers) {
 
 		self.unresolved[s] = d
 	}
-}
-
-func (self *CacheEntry) zoneServers() *ZoneServers {
-	self.lock.RLock()
-	defer self.lock.RUnlock()
-
-	return self.ZoneServers()
 }
 
 func (self *CacheEntry) ZoneServers() *ZoneServers {
