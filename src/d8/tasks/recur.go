@@ -46,7 +46,7 @@ var roots = MakeRoots()
 
 const (
 	Working = iota
-	Okay      
+	Okay
 	NotExists // domain not exists
 	Lost      // no valid server reachable
 )
