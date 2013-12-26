@@ -145,7 +145,7 @@ func (self *Recur) q(c Cursor, ip net.IP, name *Domain) error {
 		return nil
 	}
 
-	next := ExtractServers(p, self.zone.Zone(), self.Domain, c)
+	next := Servers(p, self.zone.Zone(), self.Domain, c)
 
 	if next == nil {
 		self.Return = NotExists

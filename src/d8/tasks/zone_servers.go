@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"encoding/binary"
 	"math/rand"
 	"net"
 	"time"
@@ -15,7 +14,8 @@ import (
 // ZoneServers keep records name servers and their IPs if any
 type ZoneServers struct {
 	zone       *Domain
-	resolved   map[uint32]*NameServer
+	ips        map[uint32]*NameServer
+	resolved   map[string]*Domain
 	unresolved map[string]*Domain
 	records    []*pa.RR
 }
@@ -27,21 +27,17 @@ func NewZoneServers(zone *Domain) *ZoneServers {
 		zone,
 		make(map[uint32]*NameServer),
 		make(map[string]*Domain),
+		make(map[string]*Domain),
 		nil,
 	}
-}
-
-func IP2Uint(ip net.IP) uint32 {
-	bytes := []byte(ip.To4())
-	if bytes == nil {
-		panic("not ipv4")
-	}
-	return binary.BigEndian.Uint32(bytes)
 }
 
 func (self *ZoneServers) addUnresolved(server *Domain) bool {
 	s := server.String()
 	if _, found := self.unresolved[s]; found {
+		return false
+	}
+	if _, found := self.resolved[s]; found {
 		return false
 	}
 
@@ -51,7 +47,7 @@ func (self *ZoneServers) addUnresolved(server *Domain) bool {
 
 func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
 	index := IP2Uint(ip)
-	if _, found := self.resolved[index]; found {
+	if _, found := self.ips[index]; found {
 		return false
 	}
 
@@ -60,11 +56,13 @@ func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
 		delete(self.unresolved, s)
 	}
 
-	self.resolved[index] = &NameServer{
+	self.ips[index] = &NameServer{
 		Zone:   self.zone,
 		Domain: server,
 		IP:     ip,
 	}
+
+	self.resolved[server.String()] = server
 
 	return true
 }
@@ -95,9 +93,19 @@ func shuffleAppend(ret, list []*NameServer) []*NameServer {
 	return ret
 }
 
+func shuffleList(list []*NameServer) []*NameServer {
+	n := len(list)
+	ret := make([]*NameServer, n)
+	order := random.Perm(n)
+	for i := 0; i < n; i++ {
+		ret[i] = list[order[i]]
+	}
+	return ret
+}
+
 func (self *ZoneServers) ListResolved() []*NameServer {
-	resolved := make([]*NameServer, 0, len(self.resolved))
-	for _, s := range self.resolved {
+	resolved := make([]*NameServer, 0, len(self.ips))
+	for _, s := range self.ips {
 		resolved = append(resolved, s)
 	}
 
@@ -117,16 +125,13 @@ func (self *ZoneServers) ListUnresolved() []*NameServer {
 }
 
 func (self *ZoneServers) Prepare() (res, unres []*NameServer) {
-	res = make([]*NameServer, 0, len(self.resolved))
-	res = shuffleAppend(res, self.ListResolved())
-
-	unres = make([]*NameServer, 0, len(self.unresolved))
-	unres = shuffleAppend(unres, self.ListUnresolved())
-	return res, unres
+	res = shuffleList(self.ListResolved())
+	unres = shuffleList(self.ListUnresolved())
+	return
 }
 
 func (self *ZoneServers) List() []*NameServer {
-	ret := make([]*NameServer, 0, len(self.resolved)+len(self.unresolved))
+	ret := make([]*NameServer, 0, len(self.ips)+len(self.unresolved))
 	ret = append(ret, self.ListResolved()...)
 	ret = append(ret, self.ListUnresolved()...)
 	return ret
@@ -136,9 +141,8 @@ func (self *ZoneServers) Serves(d *Domain) bool {
 	return self.zone.IsZoneOf(d)
 }
 
-func ExtractServers(p *pa.Packet, z *Domain, d *Domain,
-	c Cursor) *ZoneServers {
-	redirects := p.SelectRedirects(z, d)
+func Servers(p *pa.Packet, zone *Domain, d *Domain, c Cursor) *ZoneServers {
+	redirects := p.SelectRedirects(zone, d)
 	if len(redirects) == 0 {
 		return nil
 	}
@@ -150,7 +154,7 @@ func ExtractServers(p *pa.Packet, z *Domain, d *Domain,
 
 	for _, rr := range redirects {
 		if !rr.Domain.Equal(next) {
-			c.Printf("// ignore different subzone: %v", rr.Domain)
+			c.Printf("// warning: ignore different subzone: %v", rr.Domain)
 			continue
 		}
 

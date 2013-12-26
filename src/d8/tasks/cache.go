@@ -18,7 +18,7 @@ func NewCache() *Cache {
 }
 
 func (self *Cache) put(z *ZoneServers) {
-	self.entries[z.Zone().String()] = NewCacheEntry(z)
+	// self.entries[z.Zone().String()] = NewCacheEntry(z)
 }
 
 func (self *Cache) Put(z *ZoneServers) bool {
@@ -29,6 +29,7 @@ func (self *Cache) Put(z *ZoneServers) bool {
 	if self.RegistrarOnly && !zone.IsRegistrar() {
 		return false
 	}
+
 	if self.Get(zone) != nil {
 		return false // zone already in cache
 	}
@@ -48,7 +49,7 @@ func (self *Cache) clean(z *domain.Domain) {
 	}
 }
 
-func (self *Cache) Clean(z *domain.Domain) {
+func (self *Cache) Clean() {
 	toClean := make([]string, 0, 100)
 	for k, v := range self.entries {
 		if v.Expired() {
@@ -63,5 +64,6 @@ func (self *Cache) Clean(z *domain.Domain) {
 
 func (self *Cache) Get(z *domain.Domain) *ZoneServers {
 	self.clean(z)
-	return self.entries[z.String()].zone
+	panic("todo")
+	//return self.entries[z.String()].zone
 }

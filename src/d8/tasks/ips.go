@@ -246,7 +246,7 @@ func (self *IPs) run(c Cursor) {
 
 	for _, cname := range unresolved {
 		// search for redirects
-		servers := ExtractServers(p, z.Zone(), cname, c)
+		servers := Servers(p, z.Zone(), cname, c)
 
 		// check for last result
 		if servers == nil {
