@@ -9,7 +9,7 @@ const (
 	cacheLifeSpan = time.Hour
 )
 
-type CacheEntry struct {
+type cacheEntry struct {
 	zone       *Domain
 	ips        map[uint32]*NameServer
 	resolved   map[string]*Domain
@@ -17,11 +17,11 @@ type CacheEntry struct {
 	expires    time.Time
 }
 
-func (self *CacheEntry) Expired() bool {
+func (self *cacheEntry) Expired() bool {
 	return time.Now().After(self.expires)
 }
 
-func (self *CacheEntry) addResolved(d *Domain) {
+func (self *cacheEntry) addResolved(d *Domain) {
 	s := d.String()
 	self.resolved[s] = d
 	if self.unresolved[s] != nil {
@@ -29,8 +29,8 @@ func (self *CacheEntry) addResolved(d *Domain) {
 	}
 }
 
-func NewEmptyCacheEntry(zone *Domain) *CacheEntry {
-	return &CacheEntry{
+func emptyCacheEntry(zone *Domain) *cacheEntry {
+	return &cacheEntry{
 		zone,
 		make(map[uint32]*NameServer),
 		make(map[string]*Domain),
@@ -39,13 +39,13 @@ func NewEmptyCacheEntry(zone *Domain) *CacheEntry {
 	}
 }
 
-func NewCacheEntry(zs *ZoneServers) *CacheEntry {
-	ret := NewEmptyCacheEntry(zs.zone)
+func newCacheEntry(zs *ZoneServers) *cacheEntry {
+	ret := emptyCacheEntry(zs.zone)
 	ret.Add(zs)
 	return ret
 }
 
-func (self *CacheEntry) Add(zs *ZoneServers) {
+func (self *cacheEntry) Add(zs *ZoneServers) {
 	if !zs.zone.Equal(self.zone) {
 		panic("zone mismatch")
 	}
@@ -65,6 +65,16 @@ func (self *CacheEntry) Add(zs *ZoneServers) {
 	}
 }
 
-func (self *CacheEntry) ZoneServers() *ZoneServers {
+func (self *cacheEntry) ZoneServers() *ZoneServers {
+	ret := NewZoneServers(self.zone)
+
+	for _, ns := range self.ips {
+		ret.Add(ns.Domain, ns.IP)
+	}
+
+	for _, d := range self.unresolved {
+		ret.Add(d)
+	}
+
 	panic("todo")
 }
