@@ -23,5 +23,6 @@ func ip(s string) net.IP {
 }
 
 func main() {
-	term.T(tasks.NewInfo(D("www.peopletopeople.com")))
+	term.T(tasks.NewInfo(D("www.google.com")))
+	term.T(tasks.NewInfo(D("google.com")))
 }

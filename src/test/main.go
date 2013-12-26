@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"d8/client"
 	. "d8/domain"
@@ -57,6 +58,7 @@ func main() {
 	for _, d := range list {
 		i := <-quotas
 		go crawl(d, c, quotas, i)
+		time.Sleep(time.Second)
 	}
 
 	ids := make([]int, 0, nquota)

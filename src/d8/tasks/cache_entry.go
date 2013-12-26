@@ -76,5 +76,5 @@ func (self *cacheEntry) ZoneServers() *ZoneServers {
 		ret.Add(d)
 	}
 
-	panic("todo")
+	return ret
 }

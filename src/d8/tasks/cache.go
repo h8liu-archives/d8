@@ -3,7 +3,16 @@ package tasks
 import (
 	. "d8/domain"
 	"time"
+	// "log"
 )
+
+type Cache struct {
+	RegistrarOnly bool
+	entries       map[string]*cacheEntry
+
+	puts chan *cachePut
+	gets chan *cacheGet
+}
 
 type cachePut struct {
 	zs    *ZoneServers
@@ -13,14 +22,6 @@ type cachePut struct {
 type cacheGet struct {
 	zone  *Domain
 	reply chan *ZoneServers
-}
-
-type Cache struct {
-	RegistrarOnly bool
-	entries       map[string]*cacheEntry
-
-	puts chan *cachePut
-	gets chan *cacheGet
 }
 
 func NewCache() *Cache {
@@ -39,13 +40,15 @@ func NewCache() *Cache {
 func (self *Cache) serve() {
 	ticker := time.Tick(time.Minute * 5)
 
-	select {
-	case put := <-self.puts:
-		put.reply <- self.put(put.zs)
-	case get := <-self.gets:
-		get.reply <- self.get(get.zone)
-	case <-ticker:
-		self.clean()
+	for {
+		select {
+		case put := <-self.puts:
+			put.reply <- self.put(put.zs)
+		case get := <-self.gets:
+			get.reply <- self.get(get.zone)
+		case <-ticker:
+			self.clean()
+		}
 	}
 }
 
@@ -103,4 +106,16 @@ func (self *Cache) get(z *Domain) *ZoneServers {
 	}
 
 	return entry.ZoneServers()
+}
+
+func (self *Cache) Get(z *Domain) *ZoneServers {
+	c := make(chan *ZoneServers)
+	self.gets <- &cacheGet{z, c}
+	return <-c
+}
+
+func (self *Cache) Put(zs *ZoneServers) bool {
+	c := make(chan bool)
+	self.puts <- &cachePut{zs, c}
+	return <-c
 }
