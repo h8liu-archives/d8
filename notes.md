@@ -11,13 +11,25 @@
 
 # todo
 
-- name server cache
 - better handling on message unpack error (especially when id is ...)
 - mark offline zone servers (save last unreachable time)
 - save in sqlite3 and other output devices
 
 # notes
 
-only recursive task cares about the cache, other ones will just call
-recursive
+- sqlite3 is good for secondary dumping but not good for results
+- what you are looking for is a zip file
+    
+    input
+    log/
+        000_www.google.com
+        001_xxx
+        002_xxx
+        003_xyz
+    out/
+        000_www.google.com
+        001_xxx
+        002_yyy
+        003_xyz
+    err
 
