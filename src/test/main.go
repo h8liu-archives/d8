@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"runtime"
 )
 
 func noError(e error) {
@@ -12,6 +13,8 @@ func noError(e error) {
 }
 
 func main() {
+	runtime.GOMAXPROCS(4)
+
 	c := &Crawler{
 		In:    "list",
 		Out:   "a.zip",

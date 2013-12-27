@@ -17,18 +17,20 @@ import (
 )
 
 type Crawler struct {
-	In    string
-	Out   string
-	Quota int
-	Log   io.Writer
+	In      string
+	Out     string
+	Quota   int
+	Log     io.Writer
+	Deflate bool
 }
 
 type crawlTask struct {
-	id     int
-	domain *Domain
-	client *client.Client
-	out    *zip.Writer
-	lock   *sync.Mutex
+	id      string
+	domain  *Domain
+	client  *client.Client
+	out     *zip.Writer
+	deflate bool
+	lock    *sync.Mutex
 
 	quota       int
 	quotaReturn chan int
@@ -44,6 +46,18 @@ func (self *Crawler) quotas() chan int {
 		ret <- i
 	}
 
+	return ret
+}
+
+func digits(a int) int {
+	if a <= 9 {
+		return 1
+	}
+	ret := 1
+	for a >= 10 {
+		a /= 10
+		ret++
+	}
 	return ret
 }
 
@@ -70,13 +84,16 @@ func (self *Crawler) Crawl() error {
 	quotas := self.quotas()
 	lock := new(sync.Mutex)
 
+	idFmt := fmt.Sprintf("%%0%dd", digits(len(list)))
+
 	for id, d := range list {
 		q := <-quotas
 		task := &crawlTask{
-			id:          id,
+			id:          fmt.Sprintf(idFmt, id+1),
 			domain:      d,
 			client:      c,
 			out:         out,
+			deflate:     self.Deflate,
 			lock:        lock,
 			quota:       q,
 			quotaReturn: quotas,
@@ -94,10 +111,24 @@ func (self *Crawler) Crawl() error {
 }
 
 func (self *crawlTask) create(path string) (io.Writer, error) {
-	return self.out.CreateHeader(&zip.FileHeader{
-		Name:   path,
-		Method: zip.Store,
-	})
+	header := &zip.FileHeader{Name: path}
+	if self.deflate {
+		header.Method = zip.Deflate
+	}
+
+	return self.out.CreateHeader(header)
+}
+
+func (self *crawlTask) path(dir string) string {
+	s := self.domain.String()
+	if len(s) > 200 {
+		s = s[:200]
+	}
+	if len(s) == 0 {
+		s = "."
+	}
+
+	return fmt.Sprintf("%s/%s_%s", dir, self.id, s)
 }
 
 func (self *crawlTask) run() {
@@ -107,15 +138,14 @@ func (self *crawlTask) run() {
 	info := tasks.NewInfo(self.domain)
 	_, err := t.T(info)
 
-	d := self.domain
 	self.lock.Lock()
 
-	fout, e := self.create(fmt.Sprintf("log/%s", d))
+	fout, e := self.create(self.path("log"))
 	noError(e)
 	_, e = io.Copy(fout, logbuf)
 	noError(e)
 
-	fout, e = self.create(fmt.Sprintf("out/%s", d))
+	fout, e = self.create(self.path("out"))
 	if err == nil {
 		e = printInfo(info, fout)
 		noError(e)
