@@ -1,15 +1,15 @@
 package main
 
 import (
-	"os"
-	"fmt"
 	"bufio"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"d8/domain"
-	"d8/term"
 	"d8/tasks"
+	"d8/term"
 )
 
 func noError(e error) {
@@ -20,7 +20,7 @@ func noError(e error) {
 
 func main() {
 	s := bufio.NewScanner(os.Stdin)
-	
+
 	for {
 		fmt.Print("d8> ")
 		if !s.Scan() {
