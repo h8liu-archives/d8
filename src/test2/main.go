@@ -1,15 +1,15 @@
 package main
 
 import (
-	// "fmt"
+	"os"
+	"fmt"
+	"bufio"
 	"log"
-	"net"
+	"strings"
 
-	// "d8/client"
-	. "d8/domain"
-	//. "d8/packet/consts"
-	"d8/tasks"
+	"d8/domain"
 	"d8/term"
+	"d8/tasks"
 )
 
 func noError(e error) {
@@ -18,11 +18,28 @@ func noError(e error) {
 	}
 }
 
-func ip(s string) net.IP {
-	return net.ParseIP(s)
-}
-
 func main() {
-	term.T(tasks.NewInfo(D("www.google.com")))
-	term.T(tasks.NewInfo(D("google.com")))
+	s := bufio.NewScanner(os.Stdin)
+	
+	for {
+		fmt.Print("d8> ")
+		if !s.Scan() {
+			break
+		}
+
+		line := s.Text()
+		line = strings.TrimSpace(line)
+		d, e := domain.Parse(line)
+		if e != nil {
+			fmt.Println("error: ", e)
+			continue
+		}
+
+		term.T(tasks.NewInfo(d))
+		fmt.Println()
+	}
+
+	noError(s.Err())
+
+	fmt.Println()
 }

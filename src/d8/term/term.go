@@ -1,7 +1,7 @@
 package term
 
 import (
-	"fmt"
+	// "fmt"
 	"io"
 	"os"
 
@@ -26,10 +26,6 @@ func New(c *client.Client) *Term {
 }
 
 func (self *Term) T(t Task) (*Branch, error) {
-	if self.done != 0 {
-		fmt.Fprintln(self.Log)
-	}
-
 	ret, e := newCursor(self).T(t)
 	self.done++
 
@@ -37,10 +33,6 @@ func (self *Term) T(t Task) (*Branch, error) {
 }
 
 func (self *Term) Q(q *client.Query) (*Leaf, error) {
-	if self.done != 0 {
-		fmt.Fprintln(self.Log)
-	}
-
 	ret, e := newCursor(self).Q(q)
 	self.done++
 
