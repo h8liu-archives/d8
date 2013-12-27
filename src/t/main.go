@@ -27,5 +27,4 @@ func main() {
 	x(`create table ips (d integer, ip text, cname text);`)
 	x(`create table servers (d integer, zone text, server text, ip text);`)
 	x(`create table logs (d integer, log text);`)
-
 }
