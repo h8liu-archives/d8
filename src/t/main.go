@@ -21,7 +21,6 @@ func main() {
 	defer db.Close()
 
 	x := func(q string) { _, e := db.Exec(q); noError(e) }
-
 	x(`create table domains (id integer not null primary key, name text);`)
 	x(`create table cnames (d integer, cname text);`)
 	x(`create table ips (d integer, ip text, cname text);`)
