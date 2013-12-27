@@ -25,34 +25,30 @@ func New(c *client.Client) *Term {
 	return ret
 }
 
-func (self *Term) T(t Task) *Branch {
+func (self *Term) T(t Task) (*Branch, error) {
 	if self.done != 0 {
 		fmt.Fprintln(self.Log)
 	}
 
 	ret, e := newCursor(self).T(t)
-	if e != nil {
-		panic(e)
-	}
-
 	self.done++
 
-	return ret
+	return ret, e
 }
 
-func (self *Term) Q(q *client.Query) *Leaf {
+func (self *Term) Q(q *client.Query) (*Leaf, error) {
 	if self.done != 0 {
 		fmt.Fprintln(self.Log)
 	}
 
 	ret, e := newCursor(self).Q(q)
-	if e != nil {
-		panic(e)
-	}
-
 	self.done++
 
-	return ret
+	return ret, e
+}
+
+func (self *Term) Count() int {
+	return self.done
 }
 
 var std *Term
@@ -72,9 +68,17 @@ func makeStd() *Term {
 }
 
 func T(t Task) *Branch {
-	return makeStd().T(t)
+	ret, e := makeStd().T(t)
+	if e != nil {
+		panic(e)
+	}
+	return ret
 }
 
 func Q(q *client.Query) *Leaf {
-	return makeStd().Q(q)
+	ret, e := makeStd().Q(q)
+	if e != nil {
+		panic(e)
+	}
+	return ret
 }

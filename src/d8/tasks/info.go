@@ -8,10 +8,11 @@ import (
 )
 
 type Info struct {
-	Domain    *Domain
-	StartWith *ZoneServers
-	HeadLess  bool
-	Shallow   bool
+	Domain     *Domain
+	StartWith  *ZoneServers
+	HeadLess   bool
+	Shallow    bool
+	HideResult bool
 
 	EndWith *ZoneServers
 
@@ -43,19 +44,21 @@ func (self *Info) Run(c Cursor) {
 		return
 	}
 
-	ips.PrintResult(c)
+	if !self.HideResult {
+		ips.PrintResult(c)
 
-	if len(self.NameServers) > 0 {
-		c.Print()
-		for _, ns := range self.NameServers {
-			c.Printf("// %v", ns)
+		if len(self.NameServers) > 0 {
+			c.Print()
+			for _, ns := range self.NameServers {
+				c.Printf("// %v", ns)
+			}
 		}
-	}
 
-	if len(self.Records) > 0 {
-		c.Print()
-		for _, rr := range self.Records {
-			c.Printf("// %s", rr.Digest())
+		if len(self.Records) > 0 {
+			c.Print()
+			for _, rr := range self.Records {
+				c.Printf("// %s", rr.Digest())
+			}
 		}
 	}
 }

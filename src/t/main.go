@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
-	"fmt"
 
 	_ "sqlite3"
 )
@@ -22,10 +22,10 @@ func test() {
 	defer db.Close()
 	x := func(s string) { _, e := db.Exec(s); noError(e) }
 	/*
-	q := func(s string) *sql.Rows { 
-		r, e := db.Query(s); noError(e)
-		return r 
-	}
+		q := func(s string) *sql.Rows {
+			r, e := db.Query(s); noError(e)
+			return r
+		}
 	*/
 
 	x(`create table domains (id integer not null primary key, name text)`)
@@ -41,11 +41,12 @@ func main() {
 	noError(e)
 	defer db.Close()
 	x := func(s string) { _, e := db.Exec(s); noError(e) }
-	q := func(s string) *sql.Rows { 
-		r, e := db.Query(s); noError(e)
-		return r 
+	q := func(s string) *sql.Rows {
+		r, e := db.Query(s)
+		noError(e)
+		return r
 	}
-	
+
 	x(`create table test (id integer not null primary key, t text)`)
 	r := q(`insert into test (t) values 
 		('row1'),
