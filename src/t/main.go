@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"log"
+	"os"
 
 	_ "sqlite3"
 )
@@ -13,32 +15,17 @@ func noError(e error) {
 }
 
 func main() {
-	db, e := sql.Open("sqlite3", "./test.d8")
+	os.Remove("test.d8")
+	db, e := sql.Open("sqlite3", "test.d8")
 	noError(e)
+	defer db.Close()
 
-	_, e := db.Exec(`
-		create table domains (
-			id integer not null primary key,
-			domain text
-		);
+	x := func(q string) { _, e := db.Exec(q); noError(e) }
 
-		create table cnames (
-			domain integer,
-			cname text
-		);
-		
-		create table ips (
-			domain integer,
-			ip text,
-			cname text
-		);
+	x(`create table domains (id integer not null primary key, name text);`)
+	x(`create table cnames (d integer, cname text);`)
+	x(`create table ips (d integer, ip text, cname text);`)
+	x(`create table servers (d integer, zone text, server text, ip text);`)
+	x(`create table logs (d integer, log text);`)
 
-		create table servers (
-			domain integer,
-			zone text,
-			server text,
-			ip text
-		)
-		`)
-
-	noError(e)
+}
