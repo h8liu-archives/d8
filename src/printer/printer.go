@@ -96,7 +96,11 @@ func (self *Printer) ShiftIn() {
 	self.Shift++
 }
 
-func (self *Printer) ShiftOut() {
+func (self *Printer) ShiftOut(a ...interface{}) {
+	if len(a) > 0 {
+		self.Print(a...)
+	}
+
 	if self.Shift == 0 {
 		panic("shift already left most")
 	}
