@@ -15,6 +15,7 @@ const (
 	ModeInfo = iota
 	ModeIP
 	ModeDig
+	ModeRecur
 )
 
 type Console struct {
@@ -48,18 +49,23 @@ func (self *Console) ip(doms []string) {
 }
 
 func (self *Console) dig(doms []string) {
-	panic("todo")
+	fmt.Println("(mode not implemented)")
+}
+
+func (self *Console) recur(doms []string) {
+	fmt.Println("(mode not implemented)")
 }
 
 func (self *Console) help() {
-	p := func(dot, desc string) { fmt.Printf("%.-10s %s\n", dot, desc) }
+	p := func(dot, desc string) { fmt.Printf(".%-10s %s\n", dot, desc) }
 
-	p("help", "print this message")
-	p("info", "detect dns structure (default mode)")
+	p("info", "ips and detect dns structure (default mode)")
 	p("ip", "query recursively for ip addresses")
+	p("recur", "works like a recursive dig")
 	p("dig", "works like dig")
 	p("verbose", "turn on log printing")
 	p("quiet", "turn off log printing")
+	p("help", "print this message")
 	p("exit", "exit")
 }
 
@@ -72,23 +78,23 @@ func (self *Console) line(line string) {
 	if fields[0][0] == '.' {
 		switch fields[0] {
 		case ".verbose":
-			fmt.Println("verbose=ture")
 			self.Verbose = true
 		case ".quiet":
-			fmt.Println("verbose=false")
 			self.Verbose = false
 		case ".info":
 			self.Mode = ModeInfo
-		case ".dig":
-			self.Mode = ModeDig
 		case ".ip":
 			self.Mode = ModeIP
+		case ".recur":
+			self.Mode = ModeRecur
+		case ".dig":
+			self.Mode = ModeDig
 		case ".help":
 			self.help()
 		case ".exit":
 			self.Exit = true
 		default:
-			fmt.Fprintln(os.Stderr, "unknown dot command")
+			fmt.Fprintln(os.Stderr, "invalid dot command")
 		}
 
 		if len(fields) > 1 {
@@ -102,8 +108,12 @@ func (self *Console) line(line string) {
 		self.info(fields)
 	case ModeIP:
 		self.ip(fields)
+	case ModeRecur:
+		self.recur(fields)
 	case ModeDig:
 		self.dig(fields)
+	default:
+		panic("bug")
 	}
 }
 
