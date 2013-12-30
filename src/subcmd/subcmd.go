@@ -9,10 +9,11 @@ import (
 
 type SubCmd struct {
 	subs map[string]*sub
+	def  func()
 }
 
 func New() *SubCmd {
-	return &SubCmd{make(map[string]*sub)}
+	return &SubCmd{make(map[string]*sub), nil}
 }
 
 func (self *SubCmd) add(sub *sub) error {
@@ -48,6 +49,10 @@ func (self *SubCmd) Help(out io.Writer) {
 	}
 }
 
+func (self *SubCmd) Default(f func()) {
+	self.def = f
+}
+
 func (self *SubCmd) Main() {
 	args := os.Args
 
@@ -63,7 +68,12 @@ func (self *SubCmd) Main() {
 			return
 		}
 
-		fmt.Fprintf(os.Stderr, "error: unknown subcmd '%s'", subcmd)
+		if self.def != nil {
+			self.def()
+			return
+		}
+
+		fmt.Fprintf(os.Stderr, "error: unknown subcmd '%s'\n", subcmd)
 		os.Exit(1)
 		return
 	}
