@@ -14,8 +14,8 @@ import (
 const (
 	ModeInfo = iota
 	ModeIP
-	ModeDig
 	ModeRecur
+	ModeDig
 )
 
 type Console struct {
