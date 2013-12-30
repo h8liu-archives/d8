@@ -10,7 +10,6 @@ import (
 
 	"d8/client"
 	. "d8/domain"
-	"d8/packet/rdata"
 	"d8/tasks"
 	"d8/term"
 	"printer"
@@ -160,66 +159,10 @@ func (self *crawlTask) run() {
 
 func printInfo(info *tasks.Info, out io.Writer) error {
 	p := printer.New(out)
+	p.Printf("// %s", info.Domain)
+	p.Println()
 
-	p.Printf("%v {", info.Domain)
-	p.ShiftIn()
-
-	if len(info.Cnames) > 0 {
-		p.Print("cnames {")
-		p.ShiftIn()
-		for _, r := range info.Cnames {
-			p.Printf("%v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
-		}
-		p.ShiftOut()
-		p.Print("}")
-	}
-
-	if len(info.Results) == 0 {
-		p.Print("(unresolvable)")
-	} else {
-		p.Print("ips {")
-		p.ShiftIn()
-
-		for _, r := range info.Results {
-			d := r.Domain
-			ip := rdata.ToIPv4(r.Rdata)
-			if d.Equal(info.Domain) {
-				p.Printf("%v", ip)
-			} else {
-				p.Printf("%v(%v)", ip, d)
-			}
-		}
-
-		p.ShiftOut()
-		p.Print("}")
-	}
-
-	if len(info.NameServers) > 0 {
-		p.Print("servers {")
-		p.ShiftIn()
-
-		for _, ns := range info.NameServers {
-			p.Printf("%v", ns)
-		}
-
-		p.ShiftOut()
-		p.Print("}")
-	}
-
-	if len(info.Records) > 0 {
-		p.Print("records {")
-		p.ShiftIn()
-
-		for _, rr := range info.Records {
-			p.Printf("%v", rr.Digest())
-		}
-
-		p.ShiftOut()
-		p.Print("}")
-	}
-
-	p.ShiftOut()
-	p.Print("}")
+	info.PrintTo(p)
 
 	return p.Error
 }

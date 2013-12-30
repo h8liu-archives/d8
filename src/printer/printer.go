@@ -97,14 +97,14 @@ func (self *Printer) ShiftIn() {
 }
 
 func (self *Printer) ShiftOut(a ...interface{}) {
-	if len(a) > 0 {
-		self.Print(a...)
-	}
-
 	if self.Shift == 0 {
 		panic("shift already left most")
 	}
 	self.Shift--
+
+	if len(a) > 0 {
+		self.Print(a...)
+	}
 }
 
 func String(p Printable) string {

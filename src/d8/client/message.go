@@ -29,7 +29,7 @@ func addrString(a *net.UDPAddr) string {
 	return a.String()
 }
 
-func (self *Message) PrintTo(p *printer.Printer) {
+func (self *Message) PrintTo(p printer.Interface) {
 	p.Printf("@%s", addrString(self.RemoteAddr))
 	self.Packet.PrintTo(p)
 }

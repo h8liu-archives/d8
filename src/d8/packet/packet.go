@@ -138,7 +138,7 @@ func Qid(d *domain.Domain, t, id uint16) *Packet {
 	return m
 }
 
-func (self *Packet) PrintTo(p *printer.Printer) {
+func (self *Packet) PrintTo(p printer.Interface) {
 	p.Printf("#%d %s", self.Id, flagString(self.Flag))
 	p.Printf("ques %v", self.Question)
 	self.Answer.PrintNameTo(p, "answ")

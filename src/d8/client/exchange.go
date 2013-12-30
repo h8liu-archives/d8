@@ -13,12 +13,12 @@ type Exchange struct {
 	PrintFlag int
 }
 
-func (self *Exchange) PrintTo(p *printer.Printer) {
+func (self *Exchange) PrintTo(p printer.Interface) {
 	self.printSend(p)
 	self.printRecv(p)
 }
 
-func (self *Exchange) printSend(p *printer.Printer) {
+func (self *Exchange) printSend(p printer.Interface) {
 	p.Printf("%s {", self.Query.String())
 	p.ShiftIn()
 
@@ -36,7 +36,7 @@ func (self *Exchange) printSend(p *printer.Printer) {
 	}
 }
 
-func (self *Exchange) printTimeTaken(p *printer.Printer) {
+func (self *Exchange) printTimeTaken(p printer.Interface) {
 	d := self.Recv.Timestamp.Sub(self.Send.Timestamp)
 	n := d.Nanoseconds()
 	var s string
@@ -53,7 +53,7 @@ func (self *Exchange) printTimeTaken(p *printer.Printer) {
 	p.Printf("(in %v)", s)
 }
 
-func (self *Exchange) printRecv(p *printer.Printer) {
+func (self *Exchange) printRecv(p printer.Interface) {
 	switch self.PrintFlag {
 	case PrintAll:
 		if self.Recv != nil {

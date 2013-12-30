@@ -33,13 +33,13 @@ func (self Section) unpack(in *bytes.Reader, p []byte) error {
 	return nil
 }
 
-func (self Section) PrintTo(p *printer.Printer) {
+func (self Section) PrintTo(p printer.Interface) {
 	for _, rr := range self {
 		p.Print(rr)
 	}
 }
 
-func (self Section) PrintNameTo(p *printer.Printer, name string) {
+func (self Section) PrintNameTo(p printer.Interface, name string) {
 	if self == nil {
 		return
 	}

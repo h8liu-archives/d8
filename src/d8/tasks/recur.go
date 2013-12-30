@@ -10,6 +10,7 @@ import (
 	pa "d8/packet"
 	"d8/packet/consts"
 	. "d8/term"
+	"printer"
 )
 
 var recurCache = NewCache()
@@ -204,4 +205,8 @@ func (self *Recur) query(c Cursor) (*ZoneServers, error) {
 	self.Return = Lost
 	self.EndWith = zone
 	return nil, nil
+}
+
+func (self *Recur) PrintTo(p printer.Interface) {
+	panic("todo")
 }

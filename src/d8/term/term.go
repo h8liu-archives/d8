@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"d8/client"
+	"printer"
 )
 
 type Term struct {
@@ -13,6 +14,7 @@ type Term struct {
 
 	done      int
 	Log       io.Writer
+	Out       io.Writer
 	PrintFlag int
 	Retry     int
 }
@@ -22,12 +24,18 @@ func New(c *client.Client) *Term {
 	ret.client = c
 	ret.PrintFlag = client.PrintReply
 	ret.Retry = 3
+
 	return ret
 }
 
 func (self *Term) T(t Task) (*Branch, error) {
 	ret, e := newCursor(self).T(t)
 	self.done++
+
+	if e == nil {
+		p := printer.New(self.Out)
+		t.PrintTo(p)
+	}
 
 	return ret, e
 }
@@ -54,6 +62,7 @@ func makeStd() *Term {
 
 		std = New(c)
 		std.Log = os.Stdout
+		std.Out = os.Stdout
 	}
 
 	return std

@@ -4,7 +4,9 @@ import (
 	. "d8/domain"
 	pa "d8/packet"
 	. "d8/packet/consts"
+	"d8/packet/rdata"
 	. "d8/term"
+	"printer"
 )
 
 type Info struct {
@@ -159,4 +161,60 @@ func (self *Info) queryZone(z *ZoneServers, c Cursor) error {
 		self.appendAll(recur.Answers)
 	}
 	return nil
+}
+
+func (self *Info) PrintTo(p printer.Interface) {
+	if len(self.Cnames) > 0 {
+		p.Print("cnames {")
+		p.ShiftIn()
+		for _, r := range self.Cnames {
+			p.Printf("%v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
+		}
+		p.ShiftOut()
+		p.Print("}")
+	}
+
+	if len(self.Results) == 0 {
+		p.Print("(unresolvable)")
+	} else {
+		p.Print("ips {")
+		p.ShiftIn()
+
+		for _, r := range self.Results {
+			d := r.Domain
+			ip := rdata.ToIPv4(r.Rdata)
+			if d.Equal(self.Domain) {
+				p.Printf("%v", ip)
+			} else {
+				p.Printf("%v(%v)", ip, d)
+			}
+		}
+
+		p.ShiftOut()
+		p.Print("}")
+	}
+
+	if len(self.NameServers) > 0 {
+		p.Print("servers {")
+		p.ShiftIn()
+
+		for _, ns := range self.NameServers {
+			p.Printf("%v", ns)
+		}
+
+		p.ShiftOut()
+		p.Print("}")
+	}
+
+	if len(self.Records) > 0 {
+		p.Print("records {")
+		p.ShiftIn()
+
+		for _, rr := range self.Records {
+			p.Printf("%v", rr.Digest())
+		}
+
+		p.ShiftOut()
+		p.Print("}")
+	}
 }

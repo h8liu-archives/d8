@@ -8,7 +8,13 @@ import (
 	"d8/packet/consts"
 	"d8/packet/rdata"
 	. "d8/term"
+	"printer"
 )
+
+type ipsResult struct {
+	cnames  []*pa.RR
+	results []*pa.RR
+}
 
 type IPs struct {
 	Domain     *Domain
@@ -29,6 +35,8 @@ type IPs struct {
 
 	CnameRecords []*pa.RR // new cname records
 	Records      []*pa.RR // new end point ip records
+
+	resultSave *ipsResult
 }
 
 func NewIPs(d *Domain) *IPs {
@@ -146,10 +154,16 @@ func (self *IPs) Run(c Cursor) {
 }
 
 func (self *IPs) Results() (cnames, results []*pa.RR) {
+	if self.resultSave != nil {
+		return self.resultSave.cnames, self.resultSave.results
+	}
+
 	cnames = make([]*pa.RR, 0, 20)
 	results = make([]*pa.RR, 0, 20)
+	cnames, results = self.results(cnames, results)
+	self.resultSave = &ipsResult{cnames, results}
 
-	return self.results(cnames, results)
+	return
 }
 
 func (self *IPs) ResultAndIPs() (cnames, results []*pa.RR, ips []net.IP) {
@@ -271,6 +285,32 @@ func (self *IPs) run(c Cursor) {
 		_, e := c.T(cnameIPs)
 		if e != nil {
 			return
+		}
+	}
+}
+
+func (self *IPs) PrintTo(p printer.Interface) {
+	cnames, results := self.Results()
+
+	if len(cnames) > 0 {
+		for _, r := range cnames {
+			p.Printf("%v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
+		}
+		p.Println()
+	}
+
+	if len(results) == 0 {
+		p.Print("(unresolvable)")
+	} else {
+
+		for _, r := range results {
+			d := r.Domain
+			ip := rdata.ToIPv4(r.Rdata)
+			if d.Equal(self.Domain) {
+				p.Printf("%v", ip)
+			} else {
+				p.Printf("%v(%v)", ip, d)
+			}
 		}
 	}
 }

@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"d8/client"
 	"d8/domain"
 	"d8/tasks"
 	"d8/term"
@@ -22,17 +24,26 @@ type Console struct {
 	Verbose bool
 	Mode    int
 	Exit    bool
+	Term    *term.Term
+}
+
+func (self *Console) printError(e error) {
+	if e == nil {
+		return
+	}
+	fmt.Fprintln(os.Stderr, "error: ", e)
 }
 
 func (self *Console) info(doms []string) {
 	for _, s := range doms {
 		d, e := domain.Parse(s)
 		if e != nil {
-			fmt.Fprintln(os.Stderr, "error: ", e)
-			return
+			self.printError(e)
+			continue
 		}
 
-		term.T(tasks.NewInfo(d))
+		_, e = self.Term.T(tasks.NewInfo(d))
+		self.printError(e)
 	}
 }
 
@@ -40,11 +51,12 @@ func (self *Console) ip(doms []string) {
 	for _, s := range doms {
 		d, e := domain.Parse(s)
 		if e != nil {
-			fmt.Fprintln(os.Stderr, "error: ", e)
-			return
+			self.printError(e)
+			continue
 		}
 
-		term.T(tasks.NewIPs(d))
+		_, e = self.Term.T(tasks.NewIPs(d))
+		self.printError(e)
 	}
 }
 
@@ -78,9 +90,9 @@ func (self *Console) line(line string) {
 	if fields[0][0] == '.' {
 		switch fields[0] {
 		case ".verbose":
-			self.Verbose = true
+			self.Term.Log = os.Stdout
 		case ".quiet":
-			self.Verbose = false
+			self.Term.Log = nil
 		case ".info":
 			self.Mode = ModeInfo
 		case ".ip":
@@ -94,7 +106,7 @@ func (self *Console) line(line string) {
 		case ".exit":
 			self.Exit = true
 		default:
-			fmt.Fprintln(os.Stderr, "invalid dot command")
+			self.printError(errors.New("invalid dot command"))
 		}
 
 		if len(fields) > 1 {
@@ -119,6 +131,13 @@ func (self *Console) line(line string) {
 
 func (self *Console) Main() {
 	s := bufio.NewScanner(os.Stdin)
+	if self.Term == nil {
+		c, e := client.New()
+		noError(e)
+		self.Term = term.New(c)
+		self.Term.Log = nil
+		self.Term.Out = os.Stdout
+	}
 
 	for {
 		fmt.Print("d8> ")
