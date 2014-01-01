@@ -1,11 +1,13 @@
 **What is `d8`?**
 
-`d8` is a DNS crawler library written in Go. It is also a DNS crawling utility.
-The crawler is for mapping out and tracking DNS infrastructures used by a set
-of particular domains. In specific, it take a domain as input, and gives back
-the cname redirection chain, all the ip records, the non-registry name servers
-that supports the domain resolving process, and all the records (A, CNAME, NS,
-SOA, TXT, MX) that an Internet structure analytic might have interest.
+`d8` is a DNS crawler library written in Go. It is also comes with a simple DNS
+crawling program that uses the library.  The crawler implements the logic that
+automatically maps out the DNS infrastructures used by a set of particular
+domains by recursively crawling that starts from the root domain name servers.
+In specific, it take a domain as input, and gives back the cname redirection
+chain, all the ip records, the non-registry name servers that supports the
+domain resolving process, and all the records (A, CNAME, NS, SOA, TXT, MX) that
+an Internet structure analytic might have interest.
 
 **Is it a DNS client or server?**
 
@@ -32,6 +34,36 @@ to the current working directory.
 **Does it support IPv6?**
 
 No. `d8` is IPv4 only.
+
+**Does it cache records?**
+
+By default, when performing a batched crawling, only NS records and their glued
+A records of registry name servers (like zone servers of .com, .net, .com.ru,
+.org.cn, etc.) are cached. All other info are crawled fresh from the Internet.
+
+**How is the library organized?**
+
+The core library:
+
+- `d8/domain` - Provides domain name parsing.
+- `d8/client` - Provides a simple DNS async client.
+- `d8/packet` - Provides DNS packet parsing (for crawling purposes).
+- `d8/packet/consts` - Defines rdata type and class codes.
+- `d8/packet/rdata` - Provides DNS records parsing (for crawling purposes).
+- `d8/term` - Provides a recursive crawling cursor for executing crawling
+  logics.
+- `d8/tasks` - Implements common crawling logics.
+
+General purpose helpers: 
+
+- `printer` - Provides a simple line printer that supports indenting. Used for
+  printing logs.
+- `subcmd` - Provides APIs for defining sub commands.
+
+Binaries:
+
+- `bin/d8` - Implements a utility program that wraps around `d8` library. It
+  provides interactive crawling and batch crawling.
 
 **Example Run**
 
