@@ -26,7 +26,7 @@ of using *remote import path* that most Go libraries and programs used.  I feel
 at the head of each `.go` file is just so ugly. So Instead, this repository
 serves as a standalone `GOPATH` directory. For convenience, it contains a
 simple `makefile` that simply wraps some shortcuts. For example, run `make`
-under the root of this repository will perform a `GOPATH=``pwd`` go install`. 
+under the root of this repository will perform a `GOPATH=\`pwd\` go install`. 
 
 **Does it support IPv6?**
 
