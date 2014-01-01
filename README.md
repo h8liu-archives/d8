@@ -1,4 +1,4 @@
-_What is `d8`?_
+**What is `d8`?**
 
 `d8` is a DNS crawler library written in Go. It is also a DNS crawling utility.
 The crawler is for mapping out and tracking DNS infrastructures used by a set of 
@@ -7,16 +7,16 @@ redirection chain, all the ip records, the non-registry name servers that suppor
 the domain resolving process, and all the records (A, CNAME, NS, SOA, TXT, MX) that
 an Internet structure analytic might have interest.
 
-_Is it a DNS client or a DNS server?_
+**Is it a DNS client or a DNS server?**
 
 It is neither. It implements a simple DNS client that can parse several types of DNS
 records, but it is not targeted to be a full DNS client.
 
-_Does it support IPv6?_
+**Does it support IPv6?**
 
 No. `d8` is IPv4 only.
 
-_Example Run_
+**Example Run**
 
 	$ make
 	$ ./d8 www.yahoo.com
