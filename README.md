@@ -1,16 +1,32 @@
 **What is `d8`?**
 
 `d8` is a DNS crawler library written in Go. It is also a DNS crawling utility.
-The crawler is for mapping out and tracking DNS infrastructures used by a set of 
-particular domains. In specific, it take a domain as input, and gives back the cname
-redirection chain, all the ip records, the non-registry name servers that supports
-the domain resolving process, and all the records (A, CNAME, NS, SOA, TXT, MX) that
-an Internet structure analytic might have interest.
+The crawler is for mapping out and tracking DNS infrastructures used by a set
+of particular domains. In specific, it take a domain as input, and gives back
+the cname redirection chain, all the ip records, the non-registry name servers
+that supports the domain resolving process, and all the records (A, CNAME, NS,
+SOA, TXT, MX) that an Internet structure analytic might have interest.
 
-**Is it a DNS client or a DNS server?**
+**Is it a DNS client or server?**
 
-It is neither. It implements a simple DNS client that can parse several types of DNS
-records, but it is not targeted to be a full DNS client.
+It is neither. It implements a simple DNS client that can parse several types
+of DNS records, but it is not targeted to be a full DNS client.
+
+**Any dependencies required?**
+
+It only depends on Go language and its standard library.
+
+**How to build?**
+
+In short, type `make` under the root repo directory.
+
+Long version. As the author, I am sorry that I do not follow the standard way
+of using *remote import path* that most Go libraries and programs used.  I feel
+`import "github.com/h8liu/d8"` is just too long and putting several these lines
+at the head of each `.go` file is just so ugly. So Instead, this repository
+serves as a standalone `GOPATH` directory. For convenience, it contains a
+simple `makefile` that simply wraps some shortcuts. For example, run `make`
+under the root of this repository will perform a `GOPATH=``pwd`` go install`. 
 
 **Does it support IPv6?**
 
