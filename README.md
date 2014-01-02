@@ -116,7 +116,7 @@ dependencies, so that a third person could reuse part of the code chunk easily.
 For example, for parsing domains, one only need to import the `d8/domain`
 package, and don't need to care about the client and crawling cursor code.
 
-Package listing are ordered by dependencies.
+Package listing are ordered by dependencies, from bottom to top.
 
 General purpose helpers: 
 
