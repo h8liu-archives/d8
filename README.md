@@ -111,22 +111,27 @@ other info are crawled fresh from the Internet.
 
 **Library Structure**
 
-The core library:
-
-- `d8/domain` provides domain name parsing.
-- `d8/client` provides a simple DNS async client.
-- `d8/packet` provides DNS packet parsing (for crawling purposes).
-- `d8/packet/consts` defines rdata type and class codes.
-- `d8/packet/rdata` provides DNS records parsing (for crawling purposes).
-- `d8/term` provides a recursive crawling cursor for executing crawling
-  logics.
-- `d8/tasks` implements several common crawling logics.
+I split the code into pretty small and self-contained packages with clear
+dependencies, so that a third person could reuse part of the code chunk easily.
+For example, for parsing domains, one only need to import the `d8/domain`
+package, and don't need to care about the client and crawling cursor code.
 
 General purpose helpers: 
 
 - `printer` - Provides a simple line printer that supports indenting. Used for
   printing logs.
 - `subcmd` - Provides APIs for defining sub commands.
+
+The core library:
+
+- `d8/domain` provides domain name parsing.
+- `d8/client` provides a simple DNS async client.
+- `d8/packet/consts` defines rdata type and class codes.
+- `d8/packet/rdata` provides DNS records parsing (for crawling purposes).
+- `d8/packet` provides DNS packet parsing (for crawling purposes).
+- `d8/term` provides a recursive crawling cursor for executing crawling
+  logics.
+- `d8/tasks` implements several common crawling logics.
 
 Binaries:
 
