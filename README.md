@@ -37,9 +37,9 @@ No. `d8` is IPv4 only.
 
 **Does it cache records?**
 
-Only NS records and their glued A records of registry name servers (like zone
-servers of .com, .net, .com.ru, .org.cn, etc.) are cached by default. All other
-info are crawled fresh from the Internet.
+Only NS records and their glued A records of registry name servers (like TLD
+servers of `com`, `net`, `com.ru`, `org.cn`, etc.) are cached by default. All
+other info are crawled fresh from the Internet.
 
 **How is the library organized?**
 
