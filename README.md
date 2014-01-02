@@ -116,6 +116,8 @@ dependencies, so that a third person could reuse part of the code chunk easily.
 For example, for parsing domains, one only need to import the `d8/domain`
 package, and don't need to care about the client and crawling cursor code.
 
+Package listing are ordered by dependencies.
+
 General purpose helpers: 
 
 - `printer` - Provides a simple line printer that supports indenting. Used for
