@@ -32,11 +32,11 @@ simple `makefile` that simply wraps some shortcuts. For example, run `make`
 under the root of this repository will perform a `go install` with `GOPATH` set
 to the current working directory. 
 
-**Documentation**
+**Any documentation?**
 
-Not really started yet. If you need one, please tell me and I might consider
-prioritize that. Anyway, you can always use `make doc` to browse the package
-APIs.
+Do not really have one now, since I don't see it will become popular in near
+future.  If you need one, please tell me and I might consider prioritize that.
+Anyway, you can always use `make doc` to browse the package APIs.
 
 **Does it support IPv6?**
 
