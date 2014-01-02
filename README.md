@@ -84,7 +84,7 @@ It only depends on Go language and its standard library.
 In short, type `make` under the root repo directory.
 
 Long version. As the author, I am sorry that I do not follow the standard way
-of using *remote import path* that most Go libraries and programs used.  I feel
+of using *remote import path* like most other Go libraries and programs.  I feel
 `import "github.com/h8liu/d8"` is just too long and putting several these lines
 at the head of each `.go` file is just so ugly. So Instead, this repository
 serves as a standalone `GOPATH` directory. For convenience, it contains a
