@@ -41,7 +41,7 @@ Only NS records and their glued A records of registry name servers (like TLD
 servers of `com`, `net`, `com.ru`, `org.cn`, etc.) are cached by default. All
 other info are crawled fresh from the Internet.
 
-**How is the library organized?**
+**Library Structure**
 
 The core library:
 
@@ -64,6 +64,15 @@ Binaries:
 
 - `bin/d8` - Implements a utility program that wraps around `d8` library. It
   provides interactive crawling and batch crawling.
+
+**TODO List**
+
+- `d8/client`: better truncated and invalid message parsing and handling
+  (instead of just log and discard)
+- `bin/d8`: implement `.recur` and `.q`
+- `bin/d8`: provide output as SQL dumps
+- implement crawling session for tracking changes
+- implement crawling groups for crawling wildcard domains
 
 **Example Run**
 
