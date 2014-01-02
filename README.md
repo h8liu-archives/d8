@@ -85,8 +85,8 @@ In short, type `make` under the root repo directory.
 
 Long version. As the author, I am sorry that I do not follow the standard way
 of using *remote import path* like most other Go libraries and programs.  I feel
-`import "github.com/h8liu/d8"` is just too long and putting several these lines
-at the head of each `.go` file is just so ugly. So Instead, this repository
+`import "github.com/h8liu/d8"` is just too long and putting several of these lines
+at the beginning of every `.go` file looks ugly. So Instead, this repository
 serves as a standalone `GOPATH` directory. For convenience, it contains a
 simple `makefile` that simply wraps some shortcuts. For example, run `make`
 under the root of this repository will perform a `go install` with `GOPATH` set
