@@ -52,7 +52,7 @@ The core library:
 - `d8/packet/rdata` provides DNS records parsing (for crawling purposes).
 - `d8/term` provides a recursive crawling cursor for executing crawling
   logics.
-- `d8/tasks` implements common crawling logics.
+- `d8/tasks` implements several common crawling logics.
 
 General purpose helpers: 
 
