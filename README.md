@@ -45,14 +45,14 @@ other info are crawled fresh from the Internet.
 
 The core library:
 
-- `d8/domain` - Provides domain name parsing.
-- `d8/client` - Provides a simple DNS async client.
-- `d8/packet` - Provides DNS packet parsing (for crawling purposes).
-- `d8/packet/consts` - Defines rdata type and class codes.
-- `d8/packet/rdata` - Provides DNS records parsing (for crawling purposes).
-- `d8/term` - Provides a recursive crawling cursor for executing crawling
+- `d8/domain` provides domain name parsing.
+- `d8/client` provides a simple DNS async client.
+- `d8/packet` provides DNS packet parsing (for crawling purposes).
+- `d8/packet/consts` defines rdata type and class codes.
+- `d8/packet/rdata` provides DNS records parsing (for crawling purposes).
+- `d8/term` provides a recursive crawling cursor for executing crawling
   logics.
-- `d8/tasks` - Implements common crawling logics.
+- `d8/tasks` implements common crawling logics.
 
 General purpose helpers: 
 
@@ -67,10 +67,10 @@ Binaries:
 
 **TODO List**
 
-- `d8/client`: better truncated and invalid message parsing and handling
+- `d8/client` better truncated and invalid message parsing and handling
   (instead of just log and discard)
-- `bin/d8`: implement `.recur` and `.q`
-- `bin/d8`: provide output as SQL dumps
+- `bin/d8` implement `.recur` and `.q`
+- `bin/d8` provide output as SQL dumps
 - implement crawling session for tracking changes
 - implement crawling groups for crawling wildcard domains
 
