@@ -96,7 +96,8 @@ to the current working directory.
 
 Do not really have one now, since I don't see it will become popular in near
 future.  If you need one, please tell me and I might consider prioritize that.
-Anyway, you can always use `make doc` to browse the package APIs.
+Anyway, you can always use `make doc` (which runs `godoc`) to browse the
+package APIs at `localhost:8000`.
 
 **Does it support IPv6?**
 
