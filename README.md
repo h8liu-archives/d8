@@ -69,6 +69,8 @@ Binaries:
 
 - `d8/client` better truncated and invalid message parsing and handling
   (instead of just log and discard)
+- `d8/tasks` mark temporarily unreachable name servers in ns caches
+- `d8/term` retry fallback on service rejected (return code as refused)
 - `bin/d8` implement `.recur` and `.q`
 - `bin/d8` provide output as SQL dumps
 - implement crawling session for tracking changes
