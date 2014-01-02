@@ -11,8 +11,9 @@ an Internet structure analytic might have interest.
 
 **Is it a DNS client or server?**
 
-It is neither. It implements a simple DNS client that can parse several types
-of DNS records, but it is not targeted to be a full DNS client.
+It is neither. It implements a very simple DNS client that can parse very
+limited types of DNS records, but it is not targeted to be a full client. It is
+definitely not a DNS server.
 
 **Any dependencies required?**
 
