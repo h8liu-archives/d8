@@ -53,8 +53,7 @@ func (self Section) PrintNameTo(p printer.Interface, name string) {
 		p.Printf("%s {", name)
 		p.ShiftIn()
 		self.PrintTo(p)
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	}
 }
 

@@ -98,7 +98,7 @@ func (self *Recur) Run(c Cursor) {
 	if !self.HeadLess {
 		c.Printf("recur %v %s {", self.Domain, consts.TypeString(self.Type))
 		c.ShiftIn()
-		defer ShiftOutWith(c, "}")
+		defer c.ShiftOut("}")
 	}
 
 	self.zone = self.begin()

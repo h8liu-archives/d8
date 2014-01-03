@@ -140,7 +140,7 @@ func (self *IPs) Run(c Cursor) {
 	if !self.HeadLess {
 		c.Printf("ips %v {", self.Domain)
 		c.ShiftIn()
-		defer ShiftOutWith(c, "}")
+		defer c.ShiftOut("}")
 	}
 
 	self.run(c)
@@ -177,7 +177,7 @@ func (self *IPs) ResultAndIPs() (cnames, results []*pa.RR, ips []net.IP) {
 
 	for _, rr := range results {
 		ip := rdata.ToIPv4(rr.Rdata)
-		index := IP2Uint(ip)
+		index := _IP2Uint(ip)
 		if hits[index] {
 			continue
 		}

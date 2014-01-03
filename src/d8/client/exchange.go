@@ -27,8 +27,7 @@ func (self *Exchange) printSend(p printer.Interface) {
 		p.Print("send {")
 		p.ShiftIn()
 		self.Send.PrintTo(p)
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	case PrintReply:
 		// do nothing
 	default:
@@ -60,8 +59,7 @@ func (self *Exchange) printRecv(p printer.Interface) {
 			p.Print("recv {")
 			p.ShiftIn()
 			self.Recv.PrintTo(p)
-			p.ShiftOut()
-			p.Print("}")
+			p.ShiftOut("}")
 		}
 
 		if self.Error != nil {
@@ -79,8 +77,7 @@ func (self *Exchange) printRecv(p printer.Interface) {
 		panic("unknown print flag")
 	}
 
-	p.ShiftOut()
-	p.Print("}")
+	p.ShiftOut("}")
 }
 
 func (self *Exchange) String() string {

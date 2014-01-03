@@ -24,7 +24,7 @@ type Packet struct {
 }
 
 func (self *Packet) Rcode() uint16 {
-	return Rcode(self.Flag)
+	return rcode(self.Flag)
 }
 
 func randomId() uint16 { return uint16(rand.Uint32()) }

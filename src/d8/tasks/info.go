@@ -38,7 +38,7 @@ func (self *Info) Run(c Cursor) {
 	if !self.HeadLess {
 		c.Printf("info %v {", self.Domain)
 		c.ShiftIn()
-		defer ShiftOutWith(c, "}")
+		defer c.ShiftOut("}")
 	}
 
 	ips := self.run(c)
@@ -170,8 +170,7 @@ func (self *Info) PrintTo(p printer.Interface) {
 		for _, r := range self.Cnames {
 			p.Printf("%v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
 		}
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	}
 
 	if len(self.Results) == 0 {
@@ -190,8 +189,7 @@ func (self *Info) PrintTo(p printer.Interface) {
 			}
 		}
 
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	}
 
 	if len(self.NameServers) > 0 {
@@ -202,8 +200,7 @@ func (self *Info) PrintTo(p printer.Interface) {
 			p.Printf("%v", ns)
 		}
 
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	}
 
 	if len(self.Records) > 0 {
@@ -214,7 +211,6 @@ func (self *Info) PrintTo(p printer.Interface) {
 			p.Printf("%v", rr.Digest())
 		}
 
-		p.ShiftOut()
-		p.Print("}")
+		p.ShiftOut("}")
 	}
 }

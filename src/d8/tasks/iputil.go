@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func IP2Uint(ip net.IP) uint32 {
+func _IP2Uint(ip net.IP) uint32 {
 	bytes := []byte(ip.To4())
 	if bytes == nil {
 		panic("not ipv4")

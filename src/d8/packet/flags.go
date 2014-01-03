@@ -48,7 +48,7 @@ func (self *flagTags) String() string {
 	return strings.Join(self.tags, " ")
 }
 
-func Rcode(flag uint16) uint16 {
+func rcode(flag uint16) uint16 {
 	return flag & RcodeMask
 }
 
@@ -63,7 +63,7 @@ func flagString(flag uint16) string {
 	t.Tag((flag&FlagRD) != 0, "rec-desir")
 	t.Tag((flag&FlagRA) != 0, "rec-avail")
 
-	rcode := Rcode(flag)
+	rcode := rcode(flag)
 	t.Tag(rcode == RcodeFormatError, "fmt-err")
 	t.Tag(rcode == RcodeServerFail, "serv-fail")
 	t.Tag(rcode == RcodeNameError, "name-err")

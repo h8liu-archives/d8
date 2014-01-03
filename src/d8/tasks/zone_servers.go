@@ -46,7 +46,7 @@ func (self *ZoneServers) addUnresolved(server *Domain) bool {
 }
 
 func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
-	index := IP2Uint(ip)
+	index := _IP2Uint(ip)
 	if _, found := self.ips[index]; found {
 		return false
 	}
