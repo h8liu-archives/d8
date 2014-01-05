@@ -15,13 +15,17 @@ const (
 
 	RcodeMask = 0xf
 	OpMask    = 0x3 << 11
+)
 
-	OpQuery  = 0 << 11
-	OpIquery = 1 << 11
-	OpStatus = 2 << 11
+const (
+	OpQuery  = iota << 11
+	OpIquery
+	OpStatus
+)
 
-	RcodeOkay        = 0
-	RcodeFormatError = iota
+const (
+	RcodeOkay        = iota
+	RcodeFormatError
 	RcodeServerFail
 	RcodeNameError
 	RcodeNotImplement
