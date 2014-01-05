@@ -18,13 +18,13 @@ const (
 )
 
 const (
-	OpQuery  = iota << 11
+	OpQuery = iota << 11
 	OpIquery
 	OpStatus
 )
 
 const (
-	RcodeOkay        = iota
+	RcodeOkay = iota
 	RcodeFormatError
 	RcodeServerFail
 	RcodeNameError
