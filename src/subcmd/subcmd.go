@@ -32,7 +32,7 @@ func (self *SubCmd) Add(f func(), c, desc string) error {
 
 func (self *SubCmd) Help(out io.Writer) {
 	cmds := make([]string, 0, len(self.subs))
-	for c, _ := range self.subs {
+	for c := range self.subs {
 		cmds = append(cmds, c)
 	}
 

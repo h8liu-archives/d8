@@ -23,7 +23,7 @@ func (self Section) LenU16() uint16 {
 
 func (self Section) unpack(in *bytes.Reader, p []byte) error {
 	var e error
-	for i, _ := range self {
+	for i := range self {
 		self[i], e = unpackRR(in, p)
 		if e != nil {
 			return e
