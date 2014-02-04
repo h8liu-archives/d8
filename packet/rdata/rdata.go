@@ -2,8 +2,8 @@ package rdata
 
 import (
 	"bytes"
-	. "github.com/h8liu/d8/packet/consts"
 	"encoding/binary"
+	. "github.com/h8liu/d8/packet/consts"
 )
 
 var enc = binary.BigEndian

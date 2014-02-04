@@ -13,21 +13,21 @@ import (
 )
 
 type Packet struct {
-	Bytes	[]byte
+	Bytes []byte
 
-	Id		uint16
-	Flag		uint16
-	Question	*Question
-	Answer		Section
-	Authority	Section
-	Addition	Section
+	Id        uint16
+	Flag      uint16
+	Question  *Question
+	Answer    Section
+	Authority Section
+	Addition  Section
 }
 
 func (self *Packet) Rcode() uint16 {
 	return rcode(self.Flag)
 }
 
-func randomId() uint16	{ return uint16(rand.Uint32()) }
+func randomId() uint16 { return uint16(rand.Uint32()) }
 
 var enc = binary.BigEndian
 
@@ -101,7 +101,7 @@ func (self *Packet) packHeader(out *bytes.Buffer) {
 
 	enc.PutUint16(buf[0:2], self.Id)
 	enc.PutUint16(buf[2:4], self.Flag)
-	enc.PutUint16(buf[4:6], 1)	// always have one question
+	enc.PutUint16(buf[4:6], 1) // always have one question
 	enc.PutUint16(buf[6:8], self.Answer.LenU16())
 	enc.PutUint16(buf[8:10], self.Authority.LenU16())
 	enc.PutUint16(buf[10:12], self.Addition.LenU16())
@@ -115,7 +115,7 @@ func (self *Packet) PackQuery() []byte {
 	self.packHeader(out)
 	self.Question.pack(out)
 
-	self.Bytes = out.Bytes()	// swap in
+	self.Bytes = out.Bytes() // swap in
 	return self.Bytes
 }
 

@@ -7,36 +7,36 @@ import (
 	pa "github.com/h8liu/d8/packet"
 	"github.com/h8liu/d8/packet/consts"
 	"github.com/h8liu/d8/packet/rdata"
-	. "github.com/h8liu/d8/term"
 	"github.com/h8liu/d8/printer"
+	. "github.com/h8liu/d8/term"
 )
 
 type ipsResult struct {
-	cnames	[]*pa.RR
-	results	[]*pa.RR
+	cnames  []*pa.RR
+	results []*pa.RR
 }
 
 type IPs struct {
-	Domain		*Domain
-	StartWith	*ZoneServers
-	HeadLess	bool
-	HideResult	bool
+	Domain     *Domain
+	StartWith  *ZoneServers
+	HeadLess   bool
+	HideResult bool
 
 	// inherit from the initializing Recur Task
-	Return	int
-	Packet	*pa.Packet
-	EndWith	*ZoneServers
-	Zones	[]*ZoneServers
+	Return  int
+	Packet  *pa.Packet
+	EndWith *ZoneServers
+	Zones   []*ZoneServers
 
-	CnameTraceBack	map[string]*Domain	// in and out, inherit from father IPs
+	CnameTraceBack map[string]*Domain // in and out, inherit from father IPs
 
-	CnameEndpoints	[]*Domain	// new endpoint cnames discovered
-	CnameIPs	map[string]*IPs	// sub IPs for each unresolved end point
+	CnameEndpoints []*Domain       // new endpoint cnames discovered
+	CnameIPs       map[string]*IPs // sub IPs for each unresolved end point
 
-	CnameRecords	[]*pa.RR	// new cname records
-	Records		[]*pa.RR	// new end point ip records
+	CnameRecords []*pa.RR // new cname records
+	Records      []*pa.RR // new end point ip records
 
-	resultSave	*ipsResult
+	resultSave *ipsResult
 }
 
 func NewIPs(d *Domain) *IPs {
@@ -107,7 +107,7 @@ func (self *IPs) extractCnames(recur *Recur, d *Domain, c Cursor) bool {
 		// see if it follows another CNAME
 		if self.extractCnames(recur, cname, c) {
 			// see so, then we only tracks the end point
-			ret = true	// we added an endpoint in the recursion
+			ret = true // we added an endpoint in the recursion
 			continue
 		}
 

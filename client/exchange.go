@@ -6,11 +6,11 @@ import (
 )
 
 type Exchange struct {
-	Query		*Query
-	Send		*Message
-	Recv		*Message
-	Error		error
-	PrintFlag	int
+	Query     *Query
+	Send      *Message
+	Recv      *Message
+	Error     error
+	PrintFlag int
 }
 
 func (self *Exchange) PrintTo(p printer.Interface) {

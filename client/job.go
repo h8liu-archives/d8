@@ -6,11 +6,11 @@ import (
 )
 
 type job struct {
-	id		uint16
-	exchange	*Exchange
-	deadline	time.Time
-	printer		*printer.Printer
-	c		chan<- *Exchange
+	id       uint16
+	exchange *Exchange
+	deadline time.Time
+	printer  *printer.Printer
+	c        chan<- *Exchange
 }
 
 func (self *job) Close() {

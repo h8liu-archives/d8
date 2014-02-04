@@ -10,11 +10,11 @@ import (
 )
 
 type RR struct {
-	Domain	*domain.Domain
-	Type	uint16
-	Class	uint16
-	TTL	uint32
-	Rdata	rdata.Rdata
+	Domain *domain.Domain
+	Type   uint16
+	Class  uint16
+	TTL    uint32
+	Rdata  rdata.Rdata
 }
 
 func (self *RR) packFlags(out *bytes.Buffer) {

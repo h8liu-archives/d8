@@ -10,7 +10,7 @@ type Leaf struct {
 
 var _ Node = new(Leaf)
 
-func (self *Leaf) IsLeaf() bool	{ return true }
+func (self *Leaf) IsLeaf() bool { return true }
 
 func newLeaf(retry int) *Leaf {
 	ret := new(Leaf)

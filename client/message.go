@@ -9,16 +9,16 @@ import (
 )
 
 type Message struct {
-	RemoteAddr	*net.UDPAddr
-	Packet		*packet.Packet
-	Timestamp	time.Time
+	RemoteAddr *net.UDPAddr
+	Packet     *packet.Packet
+	Timestamp  time.Time
 }
 
 func newMessage(q *Query, id uint16) *Message {
 	return &Message{
-		RemoteAddr:	q.Server,
-		Packet:		packet.Qid(q.Domain, q.Type, id),
-		Timestamp:	time.Now(),
+		RemoteAddr: q.Server,
+		Packet:     packet.Qid(q.Domain, q.Type, id),
+		Timestamp:  time.Now(),
 	}
 }
 

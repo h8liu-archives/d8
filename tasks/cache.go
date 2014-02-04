@@ -7,21 +7,21 @@ import (
 )
 
 type Cache struct {
-	RegistrarOnly	bool
-	entries		map[string]*cacheEntry
+	RegistrarOnly bool
+	entries       map[string]*cacheEntry
 
-	puts	chan *cachePut
-	gets	chan *cacheGet
+	puts chan *cachePut
+	gets chan *cacheGet
 }
 
 type cachePut struct {
-	zs	*ZoneServers
-	reply	chan bool
+	zs    *ZoneServers
+	reply chan bool
 }
 
 type cacheGet struct {
-	zone	*Domain
-	reply	chan *ZoneServers
+	zone  *Domain
+	reply chan *ZoneServers
 }
 
 func NewCache() *Cache {
@@ -55,7 +55,7 @@ func (self *Cache) serve() {
 func (self *Cache) put(z *ZoneServers) bool {
 	zone := z.Zone()
 	if zone.IsRoot() {
-		return false	// we never cache root
+		return false // we never cache root
 	}
 	if self.RegistrarOnly && !zone.IsRegistrar() {
 		return false

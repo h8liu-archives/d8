@@ -10,10 +10,10 @@ import (
 )
 
 type SrcOfAuth struct {
-	Mname			[]string
-	Rname			[]string
-	Serial, Refresh		uint32
-	Retry, Expire, Minimum	uint32
+	Mname                  []string
+	Rname                  []string
+	Serial, Refresh        uint32
+	Retry, Expire, Minimum uint32
 }
 
 func (self *SrcOfAuth) PrintTo(out *bytes.Buffer) {

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	SecAnsw	= 1 << iota
+	SecAnsw = 1 << iota
 	SecAuth
 	SecAddi
 )
@@ -16,8 +16,8 @@ type Selector interface {
 }
 
 type AnswerSelector struct {
-	Domain	*domain.Domain
-	Type	uint16
+	Domain *domain.Domain
+	Type   uint16
 }
 
 func (self *AnswerSelector) Select(rr *RR, _ int) bool {
@@ -28,8 +28,8 @@ func (self *AnswerSelector) Select(rr *RR, _ int) bool {
 }
 
 type RecordSelector struct {
-	Domain	*domain.Domain
-	Type	uint16
+	Domain *domain.Domain
+	Type   uint16
 }
 
 func (self *RecordSelector) Select(rr *RR, _ int) bool {

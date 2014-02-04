@@ -10,13 +10,13 @@ import (
 )
 
 type Term struct {
-	client	*client.Client
+	client *client.Client
 
-	done		int
-	Log		io.Writer
-	Out		io.Writer
-	PrintFlag	int
-	Retry		int
+	done      int
+	Log       io.Writer
+	Out       io.Writer
+	PrintFlag int
+	Retry     int
 }
 
 func New(c *client.Client) *Term {

@@ -9,25 +9,25 @@ import (
 	. "github.com/h8liu/d8/domain"
 	pa "github.com/h8liu/d8/packet"
 	"github.com/h8liu/d8/packet/consts"
-	. "github.com/h8liu/d8/term"
 	"github.com/h8liu/d8/printer"
+	. "github.com/h8liu/d8/term"
 )
 
 var recurCache = NewCache()
 
 type Recur struct {
-	Domain		*Domain
-	Type		uint16
-	StartWith	*ZoneServers
-	HeadLess	bool
+	Domain    *Domain
+	Type      uint16
+	StartWith *ZoneServers
+	HeadLess  bool
 
-	Return	int		// valid when Error is not null
-	Packet	*pa.Packet	// valid when Return is Okay
-	EndWith	*ZoneServers	// valid when Return is Okay
-	Answers	[]*pa.RR	// the records in Packet that ends the query
-	Zones	[]*ZoneServers
+	Return  int          // valid when Error is not null
+	Packet  *pa.Packet   // valid when Return is Okay
+	EndWith *ZoneServers // valid when Return is Okay
+	Answers []*pa.RR     // the records in Packet that ends the query
+	Zones   []*ZoneServers
 
-	zone	*ZoneServers
+	zone *ZoneServers
 }
 
 func NewRecur(d *Domain) *Recur {
@@ -36,8 +36,8 @@ func NewRecur(d *Domain) *Recur {
 
 func NewRecurType(d *Domain, t uint16) *Recur {
 	return &Recur{
-		Domain:	d,
-		Type:	t,
+		Domain: d,
+		Type:   t,
 	}
 }
 
@@ -46,10 +46,10 @@ var _ Task = new(Recur)
 var roots = MakeRoots()
 
 const (
-	Working	= iota
+	Working = iota
 	Okay
-	NotExists	// domain not exists
-	Lost		// no valid server reachable
+	NotExists // domain not exists
+	Lost      // no valid server reachable
 )
 
 func MakeRoots() *ZoneServers {
@@ -64,19 +64,19 @@ func MakeRoots() *ZoneServers {
 
 	// see en.wikipedia.org/wiki/Root_name_server for reference
 	// (last update: year 2012)
-	ns("a", "198.41.0.4")		// Verisign
-	ns("b", "192.228.79.201")	// USC-ISI
-	ns("c", "192.33.4.12")		// Cogent
-	ns("d", "128.8.10.90")		// U Maryland
-	ns("e", "192.203.230.10")	// NASA
-	ns("f", "192.5.5.241")		// Internet Systems Consortium
-	ns("g", "192.112.36.4")		// DISA
-	ns("h", "128.63.2.53")		// U.S. Army Research Lab
-	ns("i", "192.36.148.17")	// Netnod
-	ns("j", "198.41.0.10")		// Verisign
-	ns("k", "193.0.14.129")		// RIPE NCC
-	ns("l", "199.7.83.42")		// ICANN
-	ns("m", "202.12.27.33")		// WIDE Project
+	ns("a", "198.41.0.4")     // Verisign
+	ns("b", "192.228.79.201") // USC-ISI
+	ns("c", "192.33.4.12")    // Cogent
+	ns("d", "128.8.10.90")    // U Maryland
+	ns("e", "192.203.230.10") // NASA
+	ns("f", "192.5.5.241")    // Internet Systems Consortium
+	ns("g", "192.112.36.4")   // DISA
+	ns("h", "128.63.2.53")    // U.S. Army Research Lab
+	ns("i", "192.36.148.17")  // Netnod
+	ns("j", "198.41.0.10")    // Verisign
+	ns("k", "193.0.14.129")   // RIPE NCC
+	ns("l", "199.7.83.42")    // ICANN
+	ns("m", "202.12.27.33")   // WIDE Project
 
 	return ret
 }
@@ -117,16 +117,16 @@ func (self *Recur) Run(c Cursor) {
 
 func (self *Recur) q(c Cursor, ip net.IP, s *Domain) (*ZoneServers, error) {
 	q := &client.Query{
-		Domain:		self.Domain,
-		Type:		self.Type,
-		Server:		client.Server(ip),
-		Zone:		self.zone.Zone(),
-		ServerName:	s,
+		Domain:     self.Domain,
+		Type:       self.Type,
+		Server:     client.Server(ip),
+		Zone:       self.zone.Zone(),
+		ServerName: s,
 	}
 
 	reply, e := c.Q(q)
 	if e != nil {
-		return nil, e	// some resource limit reached
+		return nil, e // some resource limit reached
 	}
 
 	attempt := reply.Last()

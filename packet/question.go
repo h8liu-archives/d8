@@ -9,9 +9,9 @@ import (
 )
 
 type Question struct {
-	Domain	*domain.Domain
-	Type	uint16
-	Class	uint16
+	Domain *domain.Domain
+	Type   uint16
+	Class  uint16
 }
 
 func (self *Question) packFlags(out *bytes.Buffer) {

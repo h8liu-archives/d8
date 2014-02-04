@@ -10,11 +10,11 @@ const (
 )
 
 type cacheEntry struct {
-	zone		*Domain
-	ips		map[uint32]*NameServer
-	resolved	map[string]*Domain
-	unresolved	map[string]*Domain
-	expires		time.Time
+	zone       *Domain
+	ips        map[uint32]*NameServer
+	resolved   map[string]*Domain
+	unresolved map[string]*Domain
+	expires    time.Time
 }
 
 func (self *cacheEntry) Expired() bool {

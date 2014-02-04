@@ -8,9 +8,9 @@ import (
 )
 
 type NameServer struct {
-	Zone	*Domain
-	Domain	*Domain
-	IP	net.IP
+	Zone   *Domain
+	Domain *Domain
+	IP     net.IP
 }
 
 func (self *NameServer) String() string {

@@ -6,9 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/h8liu/d8/subcmd"
 	"github.com/h8liu/d8/client"
 	"github.com/h8liu/d8/domain"
+	"github.com/h8liu/d8/subcmd"
 	"github.com/h8liu/d8/tasks"
 	"github.com/h8liu/d8/term"
 )

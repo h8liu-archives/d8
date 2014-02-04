@@ -13,14 +13,14 @@ import (
 
 // ZoneServers keep records name servers and their IPs if any
 type ZoneServers struct {
-	zone		*Domain
-	ips		map[uint32]*NameServer
-	resolved	map[string]*Domain
-	unresolved	map[string]*Domain
-	records		[]*pa.RR
+	zone       *Domain
+	ips        map[uint32]*NameServer
+	resolved   map[string]*Domain
+	unresolved map[string]*Domain
+	records    []*pa.RR
 }
 
-func (self *ZoneServers) Zone() *Domain	{ return self.zone }
+func (self *ZoneServers) Zone() *Domain { return self.zone }
 
 func NewZoneServers(zone *Domain) *ZoneServers {
 	return &ZoneServers{
@@ -57,9 +57,9 @@ func (self *ZoneServers) add(server *Domain, ip net.IP) bool {
 	}
 
 	self.ips[index] = &NameServer{
-		Zone:	self.zone,
-		Domain:	server,
-		IP:	ip,
+		Zone:   self.zone,
+		Domain: server,
+		IP:     ip,
 	}
 
 	self.resolved[server.String()] = server
@@ -116,9 +116,9 @@ func (self *ZoneServers) ListUnresolved() []*NameServer {
 	unresolved := make([]*NameServer, 0, len(self.unresolved))
 	for _, d := range self.unresolved {
 		unresolved = append(unresolved, &NameServer{
-			Zone:	self.zone,
-			Domain:	d,
-			IP:	nil,
+			Zone:   self.zone,
+			Domain: d,
+			IP:     nil,
 		})
 	}
 	return unresolved
@@ -160,7 +160,7 @@ func Servers(p *pa.Packet, zone *Domain, d *Domain, c Cursor) *ZoneServers {
 
 		ns := rdata.ToDomain(rr.Rdata)
 
-		rrs := p.SelectIPs(ns)	// glued IPs
+		rrs := p.SelectIPs(ns) // glued IPs
 		ret.records = append(ret.records, rrs...)
 
 		ips := make([]net.IP, 0, len(rrs))

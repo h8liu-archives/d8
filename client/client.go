@@ -12,14 +12,14 @@ import (
 )
 
 type Client struct {
-	conn	*net.UDPConn
-	idPool	*idPool
+	conn   *net.UDPConn
+	idPool *idPool
 
-	jobs		map[uint16]*job
-	newJobs		chan *job
-	sendErrors	chan *job
-	recvs		chan *Message
-	timer		<-chan time.Time
+	jobs       map[uint16]*job
+	newJobs    chan *job
+	sendErrors chan *job
+	recvs      chan *Message
+	timer      <-chan time.Time
 }
 
 const (
@@ -82,9 +82,9 @@ func (self *Client) recv() {
 		}
 
 		m := &Message{
-			RemoteAddr:	addr,
-			Packet:		p,
-			Timestamp:	time.Now(),
+			RemoteAddr: addr,
+			Packet:     p,
+			Timestamp:  time.Now(),
 		}
 		self.recvs <- m
 
@@ -160,19 +160,19 @@ func (self *Client) Send(q *QueryPrinter, c chan<- *Exchange) {
 	}
 
 	exchange := &Exchange{
-		Query:		q.Query,
-		Send:		message,
-		PrintFlag:	q.PrintFlag,
+		Query:     q.Query,
+		Send:      message,
+		PrintFlag: q.PrintFlag,
 	}
 	job := &job{
-		id:		id,
-		exchange:	exchange,
-		deadline:	time.Now().Add(timeout),
-		printer:	q.Printer,
-		c:		c,
+		id:       id,
+		exchange: exchange,
+		deadline: time.Now().Add(timeout),
+		printer:  q.Printer,
+		c:        c,
 	}
 
-	self.newJobs <- job	// set a place in mapping
+	self.newJobs <- job // set a place in mapping
 
 	if q.Printer != nil {
 		exchange.printSend(q.Printer)
@@ -202,7 +202,7 @@ func (self *Client) AsyncQuery(q *QueryPrinter, f func(*Exchange)) {
 }
 
 func (self *Client) Query(q *QueryPrinter) *Exchange {
-	c := make(chan *Exchange, 1)	// we need a slot in case of send error
+	c := make(chan *Exchange, 1) // we need a slot in case of send error
 	self.Send(q, c)
 
 	return <-c

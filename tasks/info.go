@@ -5,29 +5,29 @@ import (
 	pa "github.com/h8liu/d8/packet"
 	. "github.com/h8liu/d8/packet/consts"
 	"github.com/h8liu/d8/packet/rdata"
-	. "github.com/h8liu/d8/term"
 	"github.com/h8liu/d8/printer"
+	. "github.com/h8liu/d8/term"
 )
 
 type Info struct {
-	Domain		*Domain
-	StartWith	*ZoneServers
-	HeadLess	bool
-	Shallow		bool
-	HideResult	bool
+	Domain     *Domain
+	StartWith  *ZoneServers
+	HeadLess   bool
+	Shallow    bool
+	HideResult bool
 
-	EndWith	*ZoneServers
+	EndWith *ZoneServers
 
-	Cnames	[]*pa.RR
-	Results	[]*pa.RR
+	Cnames  []*pa.RR
+	Results []*pa.RR
 
-	Records		[]*pa.RR
-	RecordsMap	map[string]*pa.RR
+	Records    []*pa.RR
+	RecordsMap map[string]*pa.RR
 
-	NameServers	[]*NameServer
-	NameServersMap	map[string]*NameServer
+	NameServers    []*NameServer
+	NameServersMap map[string]*NameServer
 
-	Zones	map[string]*ZoneServers
+	Zones map[string]*ZoneServers
 }
 
 func NewInfo(d *Domain) *Info {

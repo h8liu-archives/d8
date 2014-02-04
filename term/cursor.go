@@ -17,10 +17,10 @@ type Cursor interface {
 
 type cursor struct {
 	*printer.Printer
-	*Term	// conveniently inherits the term options
+	*Term // conveniently inherits the term options
 	*stack
-	nquery	int
-	e	error
+	nquery int
+	e      error
 }
 
 var _ Cursor = new(cursor)
@@ -36,16 +36,16 @@ func newCursor(t *Term) *cursor {
 }
 
 const (
-	MaxDepth	= 30
-	MaxQuery	= 500
+	MaxDepth = 30
+	MaxQuery = 500
 )
 
 var (
-	errTooDeep		= errors.New("too deep")
-	errTooManyQueries	= errors.New("too many queries")
+	errTooDeep        = errors.New("too deep")
+	errTooManyQueries = errors.New("too many queries")
 )
 
-func (self *cursor) Error() error	{ return self.e }
+func (self *cursor) Error() error { return self.e }
 
 func (self *cursor) Q(q *client.Query) (*Leaf, error) {
 	if self.e != nil {
@@ -91,9 +91,9 @@ func (self *cursor) T(t Task) (*Branch, error) {
 
 func (self *cursor) q(q *client.Query) *Leaf {
 	qp := &client.QueryPrinter{
-		Query:		q,
-		Printer:	self.Printer,
-		PrintFlag:	self.PrintFlag,
+		Query:     q,
+		Printer:   self.Printer,
+		PrintFlag: self.PrintFlag,
 	}
 
 	ret := newLeaf(self.Retry)

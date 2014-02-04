@@ -10,8 +10,8 @@ import (
 )
 
 type MailEx struct {
-	Priority	uint16
-	Domain		[]string
+	Priority uint16
+	Domain   []string
 }
 
 func (self *MailEx) PrintTo(out *bytes.Buffer) {

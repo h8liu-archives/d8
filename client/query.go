@@ -10,38 +10,38 @@ import (
 )
 
 const (
-	PrintAll	= iota
+	PrintAll = iota
 	PrintReply
 )
 
 type QueryPrinter struct {
 	*Query
 
-	Printer		*printer.Printer
-	PrintFlag	int
+	Printer   *printer.Printer
+	PrintFlag int
 }
 
 type Query struct {
-	Domain	*domain.Domain
-	Type	uint16
-	Server	*net.UDPAddr
+	Domain *domain.Domain
+	Type   uint16
+	Server *net.UDPAddr
 
-	Zone		*domain.Domain
-	ServerName	*domain.Domain
+	Zone       *domain.Domain
+	ServerName *domain.Domain
 }
 
 func Server(ip net.IP) *net.UDPAddr {
 	return &net.UDPAddr{
-		IP:	ip,
-		Port:	DNSPort,
+		IP:   ip,
+		Port: DNSPort,
 	}
 }
 
 func Q(d *domain.Domain, t uint16, at net.IP) *Query {
 	return &Query{
-		Domain:	d,
-		Type:	t,
-		Server:	Server(at),
+		Domain: d,
+		Type:   t,
+		Server: Server(at),
 	}
 }
 
