@@ -178,6 +178,10 @@ func (self *Domain) RegParts() (registered *Domain, registrar *Domain) {
 			// cur is root
 			return last, cur
 		}
+		if parent.IsRoot() {
+			// top level domain
+			return last, cur
+		}
 		if superRegs[cur.name] {
 			return last, cur
 		}

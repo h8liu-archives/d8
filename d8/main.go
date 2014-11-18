@@ -31,8 +31,7 @@ func crawl() {
 
 	c := &Crawler{
 		In:    "list",
-		Out:   "a.zip",
-		Quota: 30,
+		Quota: 20,
 		Log:   os.Stderr,
 	}
 

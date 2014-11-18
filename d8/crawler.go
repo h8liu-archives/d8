@@ -1,12 +1,12 @@
 package main
 
 import (
-	"archive/zip"
 	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"sync"
+	"log"
 
 	"github.com/h8liu/d8/client"
 	. "github.com/h8liu/d8/domain"
@@ -17,7 +17,6 @@ import (
 
 type Crawler struct {
 	In      string
-	Out     string
 	Quota   int
 	Log     io.Writer
 	Deflate bool
@@ -27,7 +26,6 @@ type crawlTask struct {
 	id      string
 	domain  *Domain
 	client  *client.Client
-	out     *zip.Writer
 	deflate bool
 	lock    *sync.Mutex
 
@@ -67,14 +65,6 @@ func (self *Crawler) Crawl() error {
 		return e
 	}
 
-	// init output
-	fout, e := os.Create(self.Out)
-	if e != nil {
-		return e
-	}
-	out := zip.NewWriter(fout)
-	defer out.Close()
-
 	c, e := client.New()
 	if e != nil {
 		return e
@@ -91,7 +81,6 @@ func (self *Crawler) Crawl() error {
 			id:          fmt.Sprintf(idFmt, id+1),
 			domain:      d,
 			client:      c,
-			out:         out,
 			deflate:     self.Deflate,
 			lock:        lock,
 			quota:       q,
@@ -109,14 +98,23 @@ func (self *Crawler) Crawl() error {
 	return nil
 }
 
-func (self *crawlTask) create(path string) (io.Writer, error) {
-	header := &zip.FileHeader{Name: path}
-	if self.deflate {
-		header.Method = zip.Deflate
-	}
+func (self *crawlTask) create(path string) (io.WriteCloser, error) {
+	return os.Create(path)
+	/*
+		header := &zip.FileHeader{Name: path}
+		if self.deflate {
+			header.Method = zip.Deflate
+		}
 
-	return self.out.CreateHeader(header)
+		return self.out.CreateHeader(header)
+	*/
 }
+
+/*
+func (self *crawlTask) create(path string) (io.Writer, error) {
+
+}
+*/
 
 func (self *crawlTask) path(dir string) string {
 	s := self.domain.String()
@@ -130,6 +128,12 @@ func (self *crawlTask) path(dir string) string {
 	return fmt.Sprintf("%s/%s_%s", dir, self.id, s)
 }
 
+func (self *crawlTask) noError(e error) {
+	if e != nil {
+		log.Fatalf("%s: %e", self.domain, e)
+	}
+}
+
 func (self *crawlTask) run() {
 	logbuf := new(bytes.Buffer)
 	t := term.New(self.client)
@@ -139,15 +143,22 @@ func (self *crawlTask) run() {
 
 	self.lock.Lock()
 
+	fmt.Printf("%s\n", self.domain)
+
 	fout, e := self.create(self.path("log"))
-	noError(e)
+	self.noError(e)
 	_, e = io.Copy(fout, logbuf)
-	noError(e)
+	self.noError(e)
+	e = fout.Close()
+	self.noError(e)
 
 	fout, e = self.create(self.path("out"))
 	if err == nil {
 		e = printInfo(info, fout)
-		noError(e)
+		self.noError(e)
+
+		e = fout.Close()
+		self.noError(e)
 	} else {
 		fmt.Fprintf(fout, "error: %v\n", err)
 	}

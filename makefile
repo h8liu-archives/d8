@@ -8,3 +8,6 @@ fmt:
 
 test:
 	go test ./...
+
+lc:
+	wc -l `find . -name "*.go" | grep -v regmap`
