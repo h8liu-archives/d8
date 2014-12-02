@@ -16,14 +16,6 @@ type Request struct {
 	Callback string
 }
 
-type Respond struct {
-	Name    string
-	Crawled int
-	Total   int
-	Done    bool
-	Error   string
-}
-
 type server struct{}
 
 func checkName(name string) bool {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"sync"
 
 	"github.com/h8liu/d8/client"
 	"github.com/h8liu/d8/domain"
@@ -14,11 +13,11 @@ import (
 type task struct {
 	domain *domain.Domain
 	client *client.Client
-	wait   *sync.WaitGroup
+	job    *job
 }
 
 func (task *task) run() {
-	defer task.wait.Done()
+	defer task.job.taskDone()
 
 	logBuf := new(bytes.Buffer)
 	t := term.New(task.client)
@@ -35,5 +34,4 @@ func (task *task) run() {
 	}
 
 	panic("save log, out, err, and result")
-
 }

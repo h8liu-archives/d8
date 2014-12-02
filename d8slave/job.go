@@ -13,6 +13,14 @@ import (
 	"github.com/h8liu/d8/domain"
 )
 
+type Respond struct {
+	Name    string
+	Crawled int
+	Total   int
+	Done    bool
+	Error   string
+}
+
 type job struct {
 	name     string
 	domains  []*domain.Domain
@@ -22,6 +30,7 @@ type job struct {
 	err      error
 	db       *sql.DB
 	client   *rpc.Client
+	waitg    *sync.WaitGroup
 }
 
 func newJob(name string, doms []*domain.Domain, cb string) *job {
@@ -112,21 +121,25 @@ func (j *job) quotas() chan int {
 	return ret
 }
 
+func (j *job) taskDone() {
+
+}
+
 func (j *job) crawl() {
 	c, e := client.New()
 	if j.failOn(e) {
 		return
 	}
 
-	wg := new(sync.WaitGroup)
-	wg.Add(300)
+	j.waitg = new(sync.WaitGroup)
+	j.waitg.Add(300)
 
 	for _, d := range j.domains {
-		wg.Wait()
+		j.waitg.Wait()
 		task := &task{
 			domain: d,
 			client: c,
-			wait:   wg,
+			job:    j,
 		}
 		go task.run()
 	}
