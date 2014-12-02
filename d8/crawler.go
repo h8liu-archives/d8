@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sync"
-	"log"
 
 	"github.com/h8liu/d8/client"
 	. "github.com/h8liu/d8/domain"
