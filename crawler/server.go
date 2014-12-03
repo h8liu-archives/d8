@@ -1,8 +1,6 @@
-package main
+package crawler
 
 import (
-	"flag"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -11,12 +9,6 @@ import (
 
 	"github.com/h8liu/d8/domain"
 )
-
-type Request struct {
-	Name     string
-	Domains  []string
-	Callback string
-}
 
 type Server struct{}
 
@@ -80,9 +72,9 @@ func (s *Server) Crawl(req *Request, err *string) error {
 	return nil
 }
 
-func serve() {
-	s := new(Server)
-	e := rpc.Register(s)
+func Serve() {
+	s := rpc.NewServer()
+	e := s.RegisterName("Server", new(Server))
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -91,65 +83,15 @@ func serve() {
 	addr := ":5353"
 	log.Printf("listening on: %q\n", addr)
 
-	l, e := net.Listen("tcp", addr)
+	conn, e := net.Listen("tcp", addr)
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
+
 	for {
-		e = http.Serve(l, nil)
+		e = http.Serve(conn, s)
 		if e != nil {
 			log.Fatal("serve error:", e)
 		}
-	}
-}
-
-var (
-	jobName    = flag.String("o", "", "job output name")
-	inputPath  = flag.String("i", "doms", "input domain list")
-	serverAddr = flag.String("s", "localhost:5353", "server address")
-)
-
-func main() {
-	flag.Parse()
-
-	if *jobName == "" {
-		serve()
-		return
-	}
-
-	bs, e := ioutil.ReadFile(*inputPath)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	req := new(Request)
-
-	doms := strings.Split(string(bs), "\n")
-	for _, d := range doms {
-		d = strings.TrimSpace(d)
-		if d == "" {
-			continue
-		}
-		req.Domains = append(req.Domains, d)
-	}
-
-	req.Name = *jobName
-
-	c, e := rpc.DialHTTP("tcp", *serverAddr)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	var reply string
-	e = c.Call("Server.Crawl", req, &reply)
-	if e != nil {
-		log.Fatal(e)
-	} else if reply != "" {
-		log.Print(reply)
-	}
-
-	e = c.Close()
-	if e != nil {
-		log.Fatal(e)
 	}
 }
