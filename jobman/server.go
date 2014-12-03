@@ -75,6 +75,9 @@ func (jm *JobMan) q(sql string, args ...interface{}) {
 	}
 }
 
+// makeSample creates a sample for the domain list.
+// currently it just looks at the head.
+// it serves as a description.
 func makeSample(doms []string) string {
 	ret := new(bytes.Buffer)
 	cnt := 0
