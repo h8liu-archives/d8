@@ -6,28 +6,11 @@ import (
 	"go/build"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-type config struct {
-	InputPath  string
-	ResultPath string
-	OutputPath string
-	LogPath    string
-	JobDB      string
-}
-
-var conf = &config{
-	InputPath:  "input",
-	ResultPath: "result",
-	OutputPath: "output",
-	LogPath:    "log",
-	JobDB:      "jobs.db",
-}
 
 func ne(e error) {
 	if e != nil {
@@ -35,27 +18,8 @@ func ne(e error) {
 	}
 }
 
-func mkdir(s string) {
-	stat, err := os.Stat(s)
-	if err == nil {
-		// already exists
-		if stat.IsDir() {
-			return
-		}
-		log.Fatalf("%q exists and it is not a directory", s)
-	}
-	if !os.IsNotExist(err) {
-		log.Fatal(err)
-	}
-
-	e := os.Mkdir(s, 0700)
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
 func dbinit() {
-	dbpath := conf.JobDB
+	dbpath := "jobs.db"
 	db, err := sql.Open("sqlite3", dbpath)
 	ne(err)
 
@@ -68,21 +32,17 @@ func dbinit() {
 	}
 
 	q(`create table jobs (
-		id integer not null primary key, 
-		name text, 
-		state int, 
+		name text not null primary key,
+		state int,
 		total int,
 		crawled int,
+		sample text,
+		error text,
 		birth text,
 		death text
 	);`)
 
 	ne(db.Close())
-
-	mkdir(conf.InputPath)
-	mkdir(conf.ResultPath)
-	mkdir(conf.OutputPath)
-	mkdir(conf.LogPath)
 }
 
 var (
