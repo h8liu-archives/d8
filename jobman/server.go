@@ -20,8 +20,9 @@ type JobMan struct {
 	dbpath string
 	db     *sql.DB
 
-	jobs map[string]*job
-	lock *sync.Mutex
+	jobs    map[string]*job
+	lock    *sync.Mutex
+	newJobs chan *job
 
 	workers []*worker // worker client addresses
 }
@@ -38,6 +39,7 @@ func NewJobMan(dbpath string) (*JobMan, error) {
 	}
 
 	ret.lock = new(sync.Mutex)
+	ret.newJobs = make(chan *job, 10)
 
 	return ret, nil
 }
@@ -57,7 +59,12 @@ func (jm *JobMan) Serve() error {
 
 	go jm.serveCallback()
 
-	return nil
+	for {
+		// here is the scheduler
+		// listen to new jobs and progress call backs
+		// web queries will just goto the database directly
+		panic("todo")
+	}
 }
 
 func (jm *JobMan) q(sql string, args ...interface{}) {
@@ -99,16 +106,22 @@ const (
 	JobDone
 )
 
-// Adds a new job.
-func (jm *JobMan) CreateJob(name string, doms []string) error {
+func (jm *JobMan) createJob(name string, doms []string) (*job, error) {
 	jm.lock.Lock()
 	defer jm.lock.Unlock()
 
 	if jm.jobs[name] != nil {
-		return fmt.Errorf("job %q exists", name)
+		return nil, fmt.Errorf("job %q exists", name)
 	}
 
 	j := newJob(name)
+	j.savePath = name
+	e := j.Save()
+
+	if e != nil {
+		return nil, e
+	}
+
 	j.sample = makeSample(doms)
 	j.birth = time.Now().String()
 	j.state = JobCreated
@@ -116,16 +129,24 @@ func (jm *JobMan) CreateJob(name string, doms []string) error {
 	j.total = len(doms)
 
 	jm.jobs[name] = j
+	return j, nil
+}
 
+// CreateJob creates a new job.
+func (jm *JobMan) CreateJob(name string, doms []string) error {
+	j, e := jm.createJob(name, doms)
+	if e != nil {
+		return e
+	}
+
+	// make this persistent
 	jm.q(`insert into jobs 
 		(name, state, total, crawled, sample, birth) 
 		values (?, ?, ?, ?, ?, ?)`,
 		name, j.state, j.total, 0, j.sample, j.birth,
 	)
 
-	// TODO: save the job domain list on dist
-	// set the state then to ready
-	// and we will then wait for available crawler to crawl the job.
+	jm.newJobs <- j
 
 	return nil
 }
