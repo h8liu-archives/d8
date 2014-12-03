@@ -37,7 +37,7 @@ func dbinit() {
 		total int,
 		crawled int,
 		sample text,
-		error text,
+		err text,
 		birth text,
 		death text
 	);`)
