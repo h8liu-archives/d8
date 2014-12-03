@@ -1,6 +1,10 @@
 package tasks
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+
 	. "github.com/h8liu/d8/domain"
 	pa "github.com/h8liu/d8/packet"
 	. "github.com/h8liu/d8/packet/consts"
@@ -213,4 +217,83 @@ func (self *Info) PrintTo(p printer.Interface) {
 
 		p.ShiftOut("}")
 	}
+}
+
+func (self *Info) Out() string {
+	ret := new(bytes.Buffer)
+	p := printer.New(ret)
+	self.PrintTo(p)
+	return ret.String()
+}
+
+type infoResult struct {
+	domain  string
+	ips     []string
+	cnames  []string
+	servers []string
+	records []string
+}
+
+func newInfoResult(domain string) *infoResult {
+	ret := new(infoResult)
+	ret.domain = domain
+	ret.ips = make([]string, 0, 10)
+	ret.cnames = make([]string, 0, 10)
+	ret.servers = make([]string, 0, 10)
+	ret.records = make([]string, 0, 10)
+	return ret
+}
+
+func jmarsh(v interface{}) []byte {
+	ret, e := json.Marshal(v)
+	if e != nil {
+		panic(e)
+	}
+	return ret
+}
+
+func (self *Info) Result() string {
+	ret := newInfoResult(self.Domain.String())
+
+	for _, r := range self.Cnames {
+		s := fmt.Sprintf("%v -> %v", r.Domain, rdata.ToDomain(r.Rdata))
+		ret.cnames = append(ret.cnames, s)
+	}
+
+	for _, r := range self.Results {
+		d := r.Domain
+		ip := rdata.ToIPv4(r.Rdata)
+		var s string
+		if d.Equal(self.Domain) {
+			s = fmt.Sprintf("%v", ip)
+		} else {
+			s = fmt.Sprintf("%v(%v)", ip, d)
+		}
+
+		ret.ips = append(ret.ips, s)
+	}
+
+	for _, ns := range self.NameServers {
+		s := fmt.Sprintf("%v", ns)
+		ret.servers = append(ret.servers, s)
+	}
+	for _, rr := range self.Records {
+		s := fmt.Sprintf("%v", rr.Digest())
+		ret.records = append(ret.records, s)
+	}
+
+	out := new(bytes.Buffer)
+
+	wr := func(obj interface{}, post string) {
+		out.Write(jmarsh(obj))
+		out.WriteString(post)
+	}
+
+	wr(ret.domain, "\t")
+	wr(ret.ips, "\t")
+	wr(ret.cnames, "\t")
+	wr(ret.servers, "\t")
+	wr(ret.records, "\n")
+
+	return out.String()
 }

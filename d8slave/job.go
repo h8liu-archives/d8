@@ -2,10 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"log"
 	"net/rpc"
-	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -27,10 +25,13 @@ type job struct {
 	callback string
 	crawled  int
 	respond  *Respond
-	err      error
-	db       *sql.DB
-	client   *rpc.Client
-	waitg    *sync.WaitGroup
+
+	db     *sql.DB
+	client *rpc.Client
+	quotas chan int
+
+	resChan   chan *task
+	writeDone chan bool
 }
 
 func newJob(name string, doms []*domain.Domain, cb string) *job {
@@ -82,19 +83,29 @@ func (j *job) cb() {
 		}
 		e = j.call()
 	}
+
+	if e != nil {
+		log.Print(j.name, e)
+	}
 }
 
-func (j *job) closeClient() {
+func (j *job) cleanup() {
+	if j.db != nil {
+		e := j.db.Close()
+		if e != nil {
+			log.Print(j.db, e)
+		}
+	}
+
 	if j.client != nil {
 		e := j.client.Close()
-		if e != nil && e != rpc.ErrShutdown {
+		if e != nil {
 			log.Print(j.name, e)
 		}
 	}
 }
 
 func (j *job) fail(e error) {
-	j.err = e
 	j.respond.Error = e.Error()
 	j.cb()
 }
@@ -107,61 +118,22 @@ func (j *job) failOn(e error) bool {
 	return false
 }
 
-func (j *job) quotas() chan int {
-	nquota := 300
-	if nquota == 0 {
-		nquota = 1
-	}
-
-	ret := make(chan int, nquota)
-	for i := 0; i < nquota; i++ {
-		ret <- i
-	}
-
-	return ret
-}
-
-func (j *job) taskDone() {
-
-}
-
-func (j *job) crawl() {
-	c, e := client.New()
-	if j.failOn(e) {
-		return
-	}
-
-	j.waitg = new(sync.WaitGroup)
-	j.waitg.Add(300)
-
-	for _, d := range j.domains {
-		j.waitg.Wait()
-		task := &task{
-			domain: d,
-			client: c,
-			job:    j,
-		}
-		go task.run()
-	}
+func (j *job) taskDone(t *task) {
+	j.resChan <- t
+	j.quotas <- t.quota
 }
 
 func (j *job) run() {
-	defer j.closeClient()
+	log.Printf("job %s started", j.name)
+	defer log.Printf("job %s done", j.name)
+	defer j.cleanup()
 
-	tmp, e := ioutil.TempFile("d8", "job")
-	if j.failOn(e) {
-		return
-	}
-
-	f := tmp.Name()
-	if j.failOn(tmp.Close()) {
-		return
-	}
-
-	db, err := sql.Open("sqlite3", f)
+	db, err := sql.Open("sqlite3", j.name)
 	if j.failOn(err) {
 		return
 	}
+
+	j.db = db
 
 	q := func(sql string) bool {
 		_, e := db.Exec(sql)
@@ -175,7 +147,7 @@ func (j *job) run() {
 		return true
 	}
 
-	if !q(`create table jobs {
+	if !q(`create table jobs (
 			domain text not null primary key,
 			output text not null,
 			result text not null,
@@ -184,7 +156,108 @@ func (j *job) run() {
 		return
 	}
 
-	j.db = db
-
+	log.Printf("job %s starts crawling", j.name)
 	j.crawl()
+}
+
+func (j *job) makeQuotas() chan int {
+	nquota := 300
+	ret := make(chan int, nquota)
+	for i := 0; i < nquota; i++ {
+		ret <- i
+	}
+	return ret
+}
+
+func (j *job) crawl() {
+	c, e := client.New()
+	if j.failOn(e) {
+		return
+	}
+
+	j.quotas = j.makeQuotas()
+	j.resChan = make(chan *task, 300)
+	defer close(j.resChan)
+
+	// launch the jobs
+	go func() {
+		for _, d := range j.domains {
+			quota := <-j.quotas
+			task := &task{
+				domain: d,
+				client: c,
+				job:    j,
+				quota:  quota,
+			}
+			go task.run()
+		}
+	}()
+
+	j.writeOut()
+}
+
+func (j *job) writeOut() {
+	n := 0
+	total := j.respond.Total
+
+	chkerr := func(e error) bool {
+		if e != nil {
+			j.respond.Error = e.Error()
+			j.cb()
+			return true
+		}
+		return false
+	}
+
+	const insertStmt = `insert into jobs
+		(domain, output, result, err, log) values
+		(?, ?, ?, ?, ?)`
+
+	tx, err := j.db.Begin()
+	if chkerr(err) {
+		return
+	}
+	stmt, err := tx.Prepare(insertStmt)
+	if chkerr(err) {
+		return
+	}
+
+	for n < total {
+		t := <-j.resChan
+
+		_, err = stmt.Exec(t.domain.String(),
+			t.out, t.res, t.err, t.log,
+		)
+		if chkerr(err) {
+			return
+		}
+
+		n++
+		if n%5000 == 0 {
+			err = tx.Commit()
+			if chkerr(err) {
+				return
+			}
+
+			tx, err = j.db.Begin()
+			if chkerr(err) {
+				return
+			}
+			stmt, err = tx.Prepare(insertStmt)
+			if chkerr(err) {
+				return
+			}
+
+			j.respond.Crawled = n
+			j.cb()
+		}
+	}
+
+	err = tx.Commit()
+	if chkerr(err) {
+		return
+	}
+
+	j.respond.Done = true
+	j.cb()
 }
