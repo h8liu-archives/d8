@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/rpc"
+	"runtime"
 	"strings"
 
 	"github.com/h8liu/d8/crawler"
@@ -18,6 +19,7 @@ var (
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	flag.Parse()
 
 	if *jobName == "" {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/rpc"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -255,6 +256,9 @@ func (j *job) writeOut() {
 		return
 	}
 
+	ticker := time.Tick(time.Second * 3)
+	bufed := 0
+
 	for n < total {
 		t := <-j.resChan
 
@@ -266,7 +270,10 @@ func (j *job) writeOut() {
 		}
 
 		n++
-		if n%5000 == 0 {
+		bufed++
+		j.respond.Crawled = n
+
+		if bufed > 5000 {
 			err = tx.Commit()
 			if chkerr(err) {
 				return
@@ -281,7 +288,11 @@ func (j *job) writeOut() {
 				return
 			}
 
-			j.respond.Crawled = n
+			bufed = 0
+		}
+
+		if len(ticker) > 0 {
+			// report progress
 			j.cb()
 		}
 	}
@@ -290,6 +301,8 @@ func (j *job) writeOut() {
 	if chkerr(err) {
 		return
 	}
+
+	j.cb()
 
 	fout, err := os.Create(j.archive + j.name)
 	if chkerr(err) {
