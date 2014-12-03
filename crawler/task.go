@@ -20,6 +20,9 @@ type task struct {
 	out string
 	log string
 	err string
+	id  int
+
+	verbose bool
 }
 
 func (task *task) run() {
@@ -41,5 +44,7 @@ func (task *task) run() {
 
 	task.log = logBuf.String()
 
-	log.Printf("... %v", task.domain)
+	if task.verbose {
+		log.Printf("... %v", task.domain)
+	}
 }

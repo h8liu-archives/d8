@@ -10,7 +10,9 @@ import (
 	"github.com/h8liu/d8/domain"
 )
 
-type Server struct{}
+type Server struct {
+	archive string
+}
 
 func checkIdent(s string) bool {
 	if len(s) == 0 {
@@ -66,15 +68,17 @@ func (s *Server) Crawl(req *Request, err *string) error {
 	}
 
 	j := newJob(req.Name, doms, req.Callback)
+	j.archive = s.archive
 	go j.run()
 
 	*err = "" // no error
 	return nil
 }
 
-func Serve() {
+func Serve(path string) {
 	s := rpc.NewServer()
-	e := s.RegisterName("Server", new(Server))
+	server := &Server{path}
+	e := s.RegisterName("Server", server)
 	if e != nil {
 		log.Fatal(e)
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/rpc"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -21,6 +22,7 @@ type Respond struct {
 
 type job struct {
 	name     string
+	archive  string
 	domains  []*domain.Domain
 	callback string
 	crawled  int
@@ -128,7 +130,7 @@ func (j *job) run() {
 	defer log.Printf("job %s done", j.name)
 	defer j.cleanup()
 
-	db, err := sql.Open("sqlite3", j.name)
+	db, err := sql.Open("sqlite3", j.name+".db")
 	if j.failOn(err) {
 		return
 	}
@@ -148,11 +150,41 @@ func (j *job) run() {
 	}
 
 	if !q(`create table jobs (
-			domain text not null primary key,
+			id int not null primary key,
+			domain text not null,
 			output text not null,
 			result text not null,
 			err text not null,
 			log text not null)`) {
+		return
+	}
+
+	if !q(`create table doms (
+			id int not null primary key,
+			domain text not null
+		)`) {
+		return
+	}
+
+	tx, err := j.db.Begin()
+	if j.failOn(err) {
+		return
+	}
+	stmt, err := tx.Prepare(`insert into doms (id, domain) values (?, ?)`)
+	if j.failOn(err) {
+		return
+	}
+
+	for i, d := range j.domains {
+		_, err = stmt.Exec(i+1, d.String())
+		if j.failOn(err) {
+			tx.Rollback()
+			return
+		}
+	}
+
+	err = tx.Commit()
+	if j.failOn(err) {
 		return
 	}
 
@@ -181,13 +213,14 @@ func (j *job) crawl() {
 
 	// launch the jobs
 	go func() {
-		for _, d := range j.domains {
+		for i, d := range j.domains {
 			quota := <-j.quotas
 			task := &task{
 				domain: d,
 				client: c,
 				job:    j,
 				quota:  quota,
+				id:     i + 1,
 			}
 			go task.run()
 		}
@@ -210,8 +243,8 @@ func (j *job) writeOut() {
 	}
 
 	const insertStmt = `insert into jobs
-		(domain, output, result, err, log) values
-		(?, ?, ?, ?, ?)`
+		(domain, output, result, err, log, id) values
+		(?, ?, ?, ?, ?, ?)`
 
 	tx, err := j.db.Begin()
 	if chkerr(err) {
@@ -226,7 +259,7 @@ func (j *job) writeOut() {
 		t := <-j.resChan
 
 		_, err = stmt.Exec(t.domain.String(),
-			t.out, t.res, t.err, t.log,
+			t.out, t.res, t.err, t.log, t.id,
 		)
 		if chkerr(err) {
 			return
@@ -254,6 +287,35 @@ func (j *job) writeOut() {
 	}
 
 	err = tx.Commit()
+	if chkerr(err) {
+		return
+	}
+
+	fout, err := os.Create(j.archive + j.name)
+	if chkerr(err) {
+		return
+	}
+
+	rows, err := j.db.Query(`select result from jobs order by id`)
+	if chkerr(err) {
+		return
+	}
+
+	var line string
+	for rows.Next() {
+		err = rows.Scan(&line)
+		if chkerr(err) {
+			fout.Close()
+			return
+		}
+		_, err = fout.Write([]byte(line))
+		if chkerr(err) {
+			fout.Close()
+			return
+		}
+	}
+
+	err = fout.Close()
 	if chkerr(err) {
 		return
 	}

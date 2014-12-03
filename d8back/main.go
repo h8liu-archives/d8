@@ -14,13 +14,14 @@ var (
 	jobName    = flag.String("o", "", "job output name")
 	inputPath  = flag.String("i", "doms", "input domain list")
 	serverAddr = flag.String("s", "localhost:5353", "server address")
+	saveAddr   = flag.String("a", "", "archive prefix")
 )
 
 func main() {
 	flag.Parse()
 
 	if *jobName == "" {
-		crawler.Serve()
+		crawler.Serve(*saveAddr)
 		return
 	}
 
